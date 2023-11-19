@@ -2,17 +2,18 @@ package main;
 
 import checker.Checker;
 import checker.CheckerConstants;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import fileio.input.LibraryInput;
+import fileio.input.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * The entry point to this homework. It runs the checker that tests your implentation.
@@ -29,6 +30,7 @@ public final class Main {
     /**
      * DO NOT MODIFY MAIN METHOD
      * Call the checker
+     *
      * @param args from command line
      * @throws IOException in case of exceptions to reading / writing
      */
@@ -62,7 +64,7 @@ public final class Main {
     }
 
     /**
-     * @param filePathInput for input file
+     * @param filePathInput  for input file
      * @param filePathOutput for output file
      * @throws IOException in case of exceptions to reading / writing
      */
@@ -73,8 +75,49 @@ public final class Main {
 
         ArrayNode outputs = objectMapper.createArrayNode();
 
-        // TODO add your implementation
+        //Creating library object and populate with data
+        Library mainLibrary = new Library(library);
 
+        LinkedHashMap<String, User> users = mainLibrary.getUsers();
+        ArrayList<Command> commands = objectMapper.readValue(new File("input/" + filePathInput), new TypeReference<ArrayList<Command>>() {
+        });
+
+        for (Command command : commands) {
+            User user = users.get(command.getUsername());
+            if (command.getCommand().equals("search")) {
+                outputs.add(user.search(command));
+            }
+            if (command.getCommand().equals("select")) {
+                outputs.add(user.select(command));
+            }
+            if (command.getCommand().equals("load")) {
+                outputs.add(user.load(command, mainLibrary));
+            }
+            if (command.getCommand().equals("playPause")) {
+                outputs.add(user.playPause(command));
+            }
+            if (command.getCommand().equals("repeat")) {
+                outputs.add(user.repeat(command));
+            }
+            if (command.getCommand().equals("addRemoveInPlaylist")) {
+                outputs.add(user.addRemoveInPlaylist(command));
+            }
+            if (command.getCommand().equals("status")) {
+                outputs.add(user.status(command));
+            }
+            if (command.getCommand().equals("createPlaylist")) {
+                outputs.add(user.createPlaylist(command));
+            }
+            if (command.getCommand().equals("switchVisibility")) {
+                outputs.add(user.switchVisibility(command));
+            }
+            if (command.getCommand().equals("follow")) {
+                outputs.add(user.follow(command));
+            }
+            if (command.getCommand().equals("showPlaylists")) {
+                outputs.add(user.showPlaylists(command));
+            }
+        }
         ObjectWriter objectWriter = objectMapper.writerWithDefaultPrettyPrinter();
         objectWriter.writeValue(new File(filePathOutput), outputs);
     }
