@@ -1,10 +1,11 @@
 package main;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import fileio.input.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 public final class Library {
     private ArrayList<Song> songs;
@@ -40,6 +41,43 @@ public final class Library {
         }
     }
 
+    public ObjectNode getTop5Songs(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        ArrayList<Song> sortedSongs = new ArrayList<>(songs);
+
+        sortedSongs.sort(Comparator.comparingInt(Song::getLikes).reversed());
+
+        ArrayNode resultsArray = objectMapper.createArrayNode();
+        for (int i = 0; i < Math.min(5, sortedSongs.size()); i++) {
+            resultsArray.add(sortedSongs.get(i).getName());
+        }
+        resultNode.put("result", resultsArray);
+        return resultNode;
+    }
+
+    public ObjectNode getTop5Playlists(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        ArrayList<Playlist> sortedPLaylist = new ArrayList<>(publicPlaylists);
+
+        sortedPLaylist.sort(Comparator.comparingInt(Playlist::getFollowers).reversed());
+
+        ArrayNode resultsArray = objectMapper.createArrayNode();
+        for (int i = 0; i < Math.min(5, sortedPLaylist.size()); i++) {
+            resultsArray.add(sortedPLaylist.get(i).getName());
+        }
+        resultNode.put("result", resultsArray);
+        return resultNode;
+    }
     public ArrayList<Song> getSongs() {
         return songs;
     }

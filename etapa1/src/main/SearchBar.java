@@ -8,13 +8,13 @@ import java.util.Map;
 public class SearchBar {
     private ArrayList<Song> songs;
     private ArrayList<Podcast> podcasts;
-    private ArrayList<Playlist> publicPlaylists;
+    private ArrayList<Playlist> allPlaylists;
     private ArrayList<Playlist> userPlaylists;
 
-    public SearchBar(ArrayList<Song> songs, ArrayList<Podcast> podcasts, ArrayList<Playlist> publicPlaylists, ArrayList<Playlist> userPlaylists) {
+    public SearchBar(ArrayList<Song> songs, ArrayList<Podcast> podcasts, ArrayList<Playlist> allPlaylists, ArrayList<Playlist> userPlaylists) {
         this.songs = songs;
         this.podcasts = podcasts;
-        this.publicPlaylists = publicPlaylists;
+        this.allPlaylists = allPlaylists;
         this.userPlaylists = userPlaylists;
     }
 
@@ -55,8 +55,8 @@ public class SearchBar {
                     }
                 }
             }
-            for (Playlist playlist : publicPlaylists) {
-                if (playlist.matchFilters(filters)) {
+            for (Playlist playlist : allPlaylists) {
+                if (playlist.matchFilters(filters) && playlist.getVisibility()) {
                     if (!result.contains(playlist.getName())) {
                         result.add(playlist.getName());
                         index++;

@@ -18,20 +18,23 @@ public class User {
     private Command lastCommand;
     private ArrayList<String> lastCommandResult;
     private boolean isSearch;
+    private boolean isSelect;
     private SearchBar searchBar;
-    private ArrayList<Playlist> publicPlaylist;
+    private ArrayList<Playlist> allPlaylists;
     private ArrayList<Playlist> followingPlaylists;
     private Player player;
 
-    public User(String username, int age, String city, ArrayList<Song> songs, ArrayList<Podcast> podcasts, ArrayList<Playlist> publicPlaylists) {
+    public User(String username, int age, String city, ArrayList<Song> songs, ArrayList<Podcast> podcasts, ArrayList<Playlist> allPlaylists) {
         this.username = username;
         this.age = age;
         this.city = city;
         this.playlists = new ArrayList<>();
-        this.searchBar = new SearchBar(songs, podcasts, publicPlaylists, playlists);
-        this.publicPlaylist = publicPlaylists;
+        this.searchBar = new SearchBar(songs, podcasts, allPlaylists, playlists);
+        this.allPlaylists = allPlaylists;
         this.followingPlaylists = new ArrayList<>();
         this.player = new Player();
+        isSearch = false;
+        isSelect = false;
     }
 
     public ObjectNode search(Command command) {
@@ -76,15 +79,16 @@ public class User {
                     String result = lastCommandResult.get(command.getItemNumber() - 1);
                     lastCommandResult.clear();
                     lastCommandResult.add(result);
+                    isSelect = true;
                 } else {
                     resultNode.put("message", "The selected ID is too high.");
                     lastCommandResult.clear();
                     isSearch = false;
                     return resultNode;
                 }
-            }else {
+            } else {
                 resultNode.put("message", "The selected ID is too high.");
-                return  resultNode;
+                return resultNode;
             }
         } else {
             resultNode.put("message", "Please conduct a search before making a selection.");
@@ -115,7 +119,7 @@ public class User {
             }
         }
         playlists.add(newPlaylist);
-        publicPlaylist.add(newPlaylist);
+        allPlaylists.add(newPlaylist);
         resultNode.put("message", "Playlist created successfully.");
 
         lastCommand = command;
@@ -138,11 +142,14 @@ public class User {
         } else {
             Playlist playlist = playlists.get(playlistId - 1);
             if (playlist.getVisibility()) {
-                publicPlaylist.remove(playlist);
                 playlist.setVisibility(false);
             } else {
+                for (Playlist playlist1 : allPlaylists) {
+                    if (playlist1.getName().equals(playlist.getName()) && playlist1.getOwner().equals(playlist.getOwner())) {
+                        playlist1.setVisibility(true);
+                    }
+                }
                 playlist.setVisibility(true);
-                publicPlaylist.add(playlist);
             }
             if (playlist.getVisibility()) {
                 resultNode.put("message", "Visibility status updated successfully to public.");
@@ -169,8 +176,8 @@ public class User {
                 resultNode.put("message", "The selected source is not a playlist.");
             } else if (!lastCommandResult.isEmpty()) {
                 String playlistName = lastCommandResult.get(0);
-                for (Playlist playlist : publicPlaylist) {
-                    if (playlist.getName().equals(playlistName)) {
+                for (Playlist playlist : allPlaylists) {
+                    if (playlist.getName().equals(playlistName) && playlist.getVisibility()) {
                         if (playlist.getOwner().equals(command.getUsername())) {
                             resultNode.put("message", "You cannot follow or unfollow your own playlist.");
                         } else {
@@ -186,6 +193,8 @@ public class User {
                                 lastCommand = command;
                             }
                         }
+                    } else if (playlist.getName().equals(playlistName) && playlist.getOwner().equals(command.getUsername())) {
+                        resultNode.put("message", "You cannot follow or unfollow your own playlist.");
                     }
                 }
             }
@@ -239,7 +248,7 @@ public class User {
         resultNode.put("user", command.getUsername());
         resultNode.put("timestamp", command.getTimestamp());
 
-        if (!lastCommand.getCommand().equals("select")) {
+        if (!isSelect) {
             resultNode.put("message", "Please select a source before attempting to load.");
             return resultNode;
         }
@@ -247,12 +256,12 @@ public class User {
             resultNode.put("message", "You can't load an empty audio collection!");
             return resultNode;
         }
-
+        isSelect = false;
         lastCommand = command;
-
+        int index;
         switch (lastCommandSearch.getType()) {
             case ("song"):
-                int index = 0;
+                index = 0;
                 for (Song song : library.getSongs()) {
                     if (song.getName().equals(lastCommandResult.get(0))) {
                         break;
@@ -273,8 +282,8 @@ public class User {
                         return resultNode;
                     }
                 }
-                for (Playlist playlist : publicPlaylist) {
-                    if (playlist.getName().equals(lastCommandResult.get(0))) {
+                for (Playlist playlist : allPlaylists) {
+                    if (playlist.getName().equals(lastCommandResult.get(0)) && playlist.getVisibility()) {
                         if (playlist.getSongs().isEmpty()) {
                             resultNode.put("message", "You can't load an empty audio collection!");
                             return resultNode;
@@ -384,6 +393,120 @@ public class User {
         return resultNode;
     }
 
+    public ObjectNode like(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("user", command.getUsername());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        if (player.getPlayMode().equals("clear")) {
+            resultNode.put("message", "Please load a source before liking or unliking.");
+            return resultNode;
+        }
+        if (player.getPlayMode().equals("podcast")) {
+            resultNode.put("message", "Loaded source is not a song.");
+            return resultNode;
+        }
+        if (player.like(command)) {
+            resultNode.put("message", "Like registered successfully.");
+        } else {
+            resultNode.put("message", "Unlike registered successfully.");
+        }
+
+        lastCommand = command;
+        return resultNode;
+    }
+
+    public ObjectNode showPreferredSongs(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("user", command.getUsername());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        ArrayNode resultsArray = objectMapper.createArrayNode();
+        for (Song song : player.getLikedSongs()) {
+            resultsArray.add(song.getName());
+        }
+        resultNode.set("result", resultsArray);
+
+        lastCommand = command;
+        return resultNode;
+    }
+
+    public ObjectNode nextPrev(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("user", command.getUsername());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        if (command.getCommand().equals("next")) {
+            if (player.getPlayMode().equals("clear")) {
+                resultNode.put("message", "Please load a source before skipping to the next track.");
+                return resultNode;
+            }
+            player.next(command, resultNode);
+        } else {
+            if (player.getPlayMode().equals("clear")) {
+                resultNode.put("message", "Please load a source before returning to the previous track.");
+                return resultNode;
+            }
+
+            player.prev(command, resultNode);
+            if (player.isPaused())
+                player.setPaused(false);
+        }
+
+        return resultNode;
+    }
+
+    public ObjectNode forwardBackword(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("user", command.getUsername());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        if (player.getPlayMode().equals("clear") && command.getCommand().equals("forward")) {
+            resultNode.put("message", "Please load a source before attempting to forward.");
+            return resultNode;
+        } else if (player.getPlayMode().equals("clear") && command.getCommand().equals("backward")) {
+            resultNode.put("message", "Please select a source before rewinding.");
+            return resultNode;
+        }
+
+        if (!player.getPlayMode().equals("podcast")) {
+            resultNode.put("message", "The loaded source is not a podcast.");
+            return resultNode;
+        }
+        player.forwardBackward(command);
+
+        if (command.getCommand().equals("forward")) {
+            resultNode.put("message", "Skipped forward successfully.");
+        } else if (command.getCommand().equals("backward")) {
+            resultNode.put("message", "Rewound successfully.");
+        }
+
+        return resultNode;
+    }
+
+    public ObjectNode shuffle(Command command) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        resultNode.put("command", command.getCommand());
+        resultNode.put("user", command.getUsername());
+        resultNode.put("timestamp", command.getTimestamp());
+
+        player.shuffle(command, resultNode);
+        return resultNode;
+    }
 
     public String getUsername() {
         return username;

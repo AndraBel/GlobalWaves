@@ -99,6 +99,18 @@ public final class Main {
             if (command.getCommand().equals("repeat")) {
                 outputs.add(user.repeat(command));
             }
+            if (command.getCommand().equals("shuffle")) {
+                outputs.add(user.shuffle(command));
+            }
+            if (command.getCommand().equals("forward") || command.getCommand().equals("backward")) {
+                outputs.add(user.forwardBackword(command));
+            }
+            if (command.getCommand().equals("next") || command.getCommand().equals("prev")) {
+                outputs.add(user.nextPrev(command));
+            }
+            if (command.getCommand().equals("like")) {
+                outputs.add(user.like(command));
+            }
             if (command.getCommand().equals("addRemoveInPlaylist")) {
                 outputs.add(user.addRemoveInPlaylist(command));
             }
@@ -116,6 +128,15 @@ public final class Main {
             }
             if (command.getCommand().equals("showPlaylists")) {
                 outputs.add(user.showPlaylists(command));
+            }
+            if (command.getCommand().equals("showPreferredSongs")) {
+                outputs.add(user.showPreferredSongs(command));
+            }
+            if (command.getCommand().equals("getTop5Songs")) {
+                outputs.add(mainLibrary.getTop5Songs(command));
+            }
+            if (command.getCommand().equals("getTop5Playlists")) {
+                outputs.add(mainLibrary.getTop5Playlists(command));
             }
         }
         ObjectWriter objectWriter = objectMapper.writerWithDefaultPrettyPrinter();

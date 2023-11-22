@@ -70,6 +70,12 @@ public class Song {
         return true;
     }
 
+    public void likeSong() {
+        likes++;
+    }
+    public void unlikeSong() {
+        likes--;
+    }
     public String getName() {
         return name;
     }
