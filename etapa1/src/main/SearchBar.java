@@ -2,72 +2,80 @@ package main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class SearchBar {
-    private ArrayList<Song> songs;
-    private ArrayList<Podcast> podcasts;
-    private ArrayList<Playlist> allPlaylists;
-    private ArrayList<Playlist> userPlaylists;
+    private final ArrayList<Song> songs;
+    private final ArrayList<Podcast> podcasts;
+    private final ArrayList<Playlist> allPlaylists;
+    private final ArrayList<Playlist> userPlaylists;
+    private static final int MAX_SEARCH_RESULTS = 5;
 
-    public SearchBar(ArrayList<Song> songs, ArrayList<Podcast> podcasts, ArrayList<Playlist> allPlaylists, ArrayList<Playlist> userPlaylists) {
+    public SearchBar(final ArrayList<Song> songs,
+                     final ArrayList<Podcast> podcasts,
+                     final ArrayList<Playlist> allPlaylists,
+                     final ArrayList<Playlist> userPlaylists) {
         this.songs = songs;
         this.podcasts = podcasts;
         this.allPlaylists = allPlaylists;
         this.userPlaylists = userPlaylists;
     }
 
-    public ArrayList<String> Search(Command command) {
-        ArrayList<String> result = new ArrayList<>();
+    /**
+     * A generic method to filter a list of audio files based on specified filters
+     *
+     * @param audioFiles ArrayList of audio files to be searched
+     * @param filters    HashMap of filters to be applied
+     * @param result     ArrayList of names of audio files that match the filters
+     * @param <K>        type of audio files
+     */
+    private static <K extends AudioFiles> void matchFilters(final ArrayList<K> audioFiles,
+                                                            final HashMap<String, Object> filters,
+                                                            final ArrayList<String> result) {
         int index = 0;
-        if (command.getType().equals("song")) {
-            HashMap<String, Object> filters = command.getFilters();
-            for (Song song : songs) {
-                if (song.matchFilters(filters)) {
-                    result.add(song.getName());
-                    index++;
-                    if (index == 5) {
-                        break;
-                    }
+        for (K audioFile : audioFiles) {
+            if (audioFile.matchFilters(filters)) {
+                result.add(audioFile.getName());
+                index++;
+                if (index == MAX_SEARCH_RESULTS) {
+                    break;
                 }
             }
+        }
+    }
 
-        } else if (command.getType().equals("podcast")) {
-            HashMap<String, Object> filters = command.getFilters();
-            for (Podcast podcast : podcasts) {
-                if (podcast.matchFilters(filters)) {
-                    result.add(podcast.getName());
-                    index++;
-                    if (index == 5) {
-                        break;
-                    }
-                }
+    /**
+     * This method searches for audio files that match the filters
+     *
+     * @param command Command to be searched
+     * @return ArrayList of names of audio files that match the filters
+     */
+    public ArrayList<String> search(final Command command) {
+        ArrayList<String> result = new ArrayList<>();
+        switch (command.getType()) {
+            case "song" -> {
+                matchFilters(songs, command.getFilters(), result);
             }
-        } else if (command.getType().equals("playlist")) {
-            HashMap<String, Object> filters = command.getFilters();
-            for (Playlist playlist : userPlaylists) {
-                if (playlist.matchFilters(filters)) {
-                    result.add(playlist.getName());
-                    index++;
-                    if (index == 5) {
-                        return result;
-                    }
-                }
+            case "podcast" -> {
+                matchFilters(podcasts, command.getFilters(), result);
             }
-            for (Playlist playlist : allPlaylists) {
-                if (playlist.matchFilters(filters) && playlist.getVisibility()) {
-                    if (!result.contains(playlist.getName())) {
-                        result.add(playlist.getName());
-                        index++;
-                        if (index == 5) {
-                            break;
+            case "playlist" -> {
+                matchFilters(userPlaylists, command.getFilters(), result);
+                int index = 0;
+                // Iterate through all playlists and add matching visible playlists to the result
+                for (Playlist playlist : allPlaylists) {
+                    if (playlist.matchFilters(command.getFilters()) && playlist.isVisibility()) {
+                        if (!result.contains(playlist.getName())) {
+                            result.add(playlist.getName());
+                            index++;
+                            if (index == MAX_SEARCH_RESULTS) {
+                                break;
+                            }
                         }
                     }
                 }
             }
+            default -> throw new IllegalStateException("Unexpected value: " + command.getType());
         }
         return result;
     }
-
 }

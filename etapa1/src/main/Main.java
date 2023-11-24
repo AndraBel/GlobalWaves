@@ -6,14 +6,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import fileio.input.*;
+import fileio.input.LibraryInput;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Objects;
 
 /**
  * The entry point to this homework. It runs the checker that tests your implentation.
@@ -79,66 +81,77 @@ public final class Main {
         Library mainLibrary = new Library(library);
 
         LinkedHashMap<String, User> users = mainLibrary.getUsers();
-        ArrayList<Command> commands = objectMapper.readValue(new File("input/" + filePathInput), new TypeReference<ArrayList<Command>>() {
-        });
+        ArrayList<Command> commands = objectMapper.readValue(
+                new File("input/" + filePathInput),
+                new TypeReference<ArrayList<Command>>() {
+                });
 
         for (Command command : commands) {
             User user = users.get(command.getUsername());
-            if (command.getCommand().equals("search")) {
-                outputs.add(user.search(command));
-            }
-            if (command.getCommand().equals("select")) {
-                outputs.add(user.select(command));
-            }
-            if (command.getCommand().equals("load")) {
-                outputs.add(user.load(command, mainLibrary));
-            }
-            if (command.getCommand().equals("playPause")) {
-                outputs.add(user.playPause(command));
-            }
-            if (command.getCommand().equals("repeat")) {
-                outputs.add(user.repeat(command));
-            }
-            if (command.getCommand().equals("shuffle")) {
-                outputs.add(user.shuffle(command));
-            }
-            if (command.getCommand().equals("forward") || command.getCommand().equals("backward")) {
-                outputs.add(user.forwardBackword(command));
-            }
-            if (command.getCommand().equals("next") || command.getCommand().equals("prev")) {
-                outputs.add(user.nextPrev(command));
-            }
-            if (command.getCommand().equals("like")) {
-                outputs.add(user.like(command));
-            }
-            if (command.getCommand().equals("addRemoveInPlaylist")) {
-                outputs.add(user.addRemoveInPlaylist(command));
-            }
-            if (command.getCommand().equals("status")) {
-                outputs.add(user.status(command));
-            }
-            if (command.getCommand().equals("createPlaylist")) {
-                outputs.add(user.createPlaylist(command));
-            }
-            if (command.getCommand().equals("switchVisibility")) {
-                outputs.add(user.switchVisibility(command));
-            }
-            if (command.getCommand().equals("follow")) {
-                outputs.add(user.follow(command));
-            }
-            if (command.getCommand().equals("showPlaylists")) {
-                outputs.add(user.showPlaylists(command));
-            }
-            if (command.getCommand().equals("showPreferredSongs")) {
-                outputs.add(user.showPreferredSongs(command));
-            }
-            if (command.getCommand().equals("getTop5Songs")) {
-                outputs.add(mainLibrary.getTop5Songs(command));
-            }
-            if (command.getCommand().equals("getTop5Playlists")) {
-                outputs.add(mainLibrary.getTop5Playlists(command));
+            String commandType = command.getCommand();
+            switch (commandType) {
+                case "search":
+                    outputs.add(user.search(command));
+                    break;
+                case "select":
+                    outputs.add(user.select(command));
+                    break;
+                case "load":
+                    outputs.add(user.load(command, mainLibrary));
+                    break;
+                case "playPause":
+                    outputs.add(user.playPause(command));
+                    break;
+                case "repeat":
+                    outputs.add(user.repeat(command));
+                    break;
+                case "shuffle":
+                    outputs.add(user.shuffle(command));
+                    break;
+                case "forward":
+                case "backward":
+                    outputs.add(user.forwardBackward(command));
+                    break;
+                case "next":
+                case "prev":
+                    outputs.add(user.nextPrev(command));
+                    break;
+                case "like":
+                    outputs.add(user.like(command));
+                    break;
+                case "addRemoveInPlaylist":
+                    outputs.add(user.addRemoveInPlaylist(command));
+                    break;
+                case "status":
+                    outputs.add(user.status(command));
+                    break;
+                case "createPlaylist":
+                    outputs.add(user.createPlaylist(command));
+                    break;
+                case "switchVisibility":
+                    outputs.add(user.switchVisibility(command));
+                    break;
+                case "follow":
+                    outputs.add(user.followPlaylist(command));
+                    break;
+                case "showPlaylists":
+                    outputs.add(user.showPlaylists(command));
+                    break;
+                case "showPreferredSongs":
+                    outputs.add(user.showPreferredSongs(command));
+                    break;
+                case "getTop5Songs":
+                    outputs.add(mainLibrary.getTop5Songs(command));
+                    break;
+                case "getTop5Playlists":
+                    outputs.add(mainLibrary.getTop5Playlists(command));
+                    break;
+                default:
+                    // Handle unknown command
+                    break;
             }
         }
+
         ObjectWriter objectWriter = objectMapper.writerWithDefaultPrettyPrinter();
         objectWriter.writeValue(new File(filePathOutput), outputs);
     }

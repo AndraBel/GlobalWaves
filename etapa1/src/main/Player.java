@@ -3,9 +3,10 @@ package main;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.*;
-
-import static java.lang.Math.floor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Random;
 
 public class Player {
     private Song currentSong;
@@ -16,12 +17,12 @@ public class Player {
     private Integer lastCommandTimestamp;
     private Integer playTime;
     private String playMode;
-    private HashMap<String, PodcastHistory> podcastsHistory;
+    private final HashMap<String, PodcastHistory> podcastsHistory;
     private String repeat;
     private boolean shuffle;
     private boolean paused;
-    private int pausedTime;
-    private ArrayList<Song> likedSongs;
+    private final ArrayList<Song> likedSongs;
+    private static final int SECONDS = 90;
 
     public Player() {
         podcastsHistory = new HashMap<>();
@@ -32,8 +33,13 @@ public class Player {
         playMode = "clear";
     }
 
-    public void resetPlayer(Integer loadTimestamp) {
-        CalculateStatus(loadTimestamp);
+    /**
+     * This method resets the player
+     *
+     * @param loadTimestamp The timestamp of the load command
+     */
+    public void resetPlayer(final Integer loadTimestamp) {
+        calculateStatus(loadTimestamp);
         if (playMode.equals("podcast")) {
             PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
             history.setSecond(playTime);
@@ -45,50 +51,223 @@ public class Player {
         lastCommandTimestamp = loadTimestamp;
     }
 
-    public void load(Song song, Integer loadTimestamp) {
-        CalculateStatus(loadTimestamp);
-        currentSong = song;
-        lastCommandTimestamp = loadTimestamp;
+    /**
+     * Resets the player state to its initial conditions
+     */
+    private void resetLoad() {
         playTime = 0;
-        playMode = "song";
         paused = false;
         repeat = "no repeat";
+        if (shuffle) {
+            unsuffle();
+        }
         shuffle = false;
     }
 
-    public void load(Playlist playlist, Integer loadTimestamp) {
-        if (playlist.getSongs().isEmpty())
+    /**
+     * Loads a song for player and initializes player parameters.
+     * @param song The Song object to be loaded.
+     * @param loadTimestamp The timestamp at which the load command is executed.
+     */
+    public void load(final Song song, final Integer loadTimestamp) {
+        calculateStatus(loadTimestamp);
+        currentSong = song;
+        lastCommandTimestamp = loadTimestamp;
+        playMode = "song";
+        resetLoad();
+    }
+
+    /**
+     * Loads a playlist and initializes player parameters.
+     * @param playlist The Playlist object to be loaded.
+     * @param loadTimestamp The timestamp at which the load command is executed.
+     */
+    public void load(final Playlist playlist, final Integer loadTimestamp) {
+        if (playlist.getSongs().isEmpty()) {
             return;
-        CalculateStatus(loadTimestamp);
+        }
+        calculateStatus(loadTimestamp);
         currentSong = playlist.getSongs().get(0);
         songIndex = 0;
         currentPlaylist = playlist;
         lastCommandTimestamp = loadTimestamp;
-        playTime = 0;
         playMode = "playlist";
-        paused = false;
-        repeat = "no repeat";
-        shuffle = false;
+        resetLoad();
     }
 
-    public void load(Podcast podcast, Integer loadTimestamp) {
-        CalculateStatus(loadTimestamp);
-        playMode = "podcast";
+    /**
+     * Loads a podcast and initializes player parameters.
+     * @param podcast The Podcast object to be loaded.
+     * @param loadTimestamp The timestamp at which the load command is executed.
+     */
+    public void load(final Podcast podcast, final Integer loadTimestamp) {
+        calculateStatus(loadTimestamp);
         if (!podcastsHistory.containsKey(podcast.getName())) {
             podcastsHistory.put(podcast.getName(), new PodcastHistory());
         }
-
-        PodcastHistory history = this.podcastsHistory.get(podcast.getName());
-        playTime = 0;
-
         currentPodcast = podcast;
         lastCommandTimestamp = loadTimestamp;
-        paused = false;
-        repeat = "no repeat";
-        shuffle = false;
+        playMode = "podcast";
+        resetLoad();
     }
 
-    private void CalculateStatus(Integer commandTimestamp) {
+    /**
+     * Calculates the player status for a song based on the current repeat mode.
+     */
+    private void calculateStatusSong() {
+        switch (repeat) {
+            case ("no repeat"):
+                if (playTime > currentSong.getDuration()) {
+                    playMode = "clear";
+                    playTime = 0;
+                    paused = true;
+                }
+                break;
+            case ("repeat once"):
+                if (playTime > currentSong.getDuration()) {
+                    playTime -= currentSong.getDuration();
+                    repeat = "no repeat";
+
+                    if (playTime > currentSong.getDuration()) {
+                        playMode = "clear";
+                        playTime = 0;
+                        paused = true;
+                    }
+                }
+                break;
+            case ("repeat infinite"):
+                playTime = playTime - (playTime / currentSong.getDuration())
+                        * currentSong.getDuration();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Calculates the player status for a playlist based on the current repeat mode.
+     */
+    private void calculateStatusPlaylist() {
+        switch (repeat) {
+            case ("no repeat"):
+                while (playTime > currentPlaylist.getSongs().get(songIndex).getDuration()) {
+                    // If is the playlist's last song, the player is reset
+                    if (songIndex == currentPlaylist.getSongs().size() - 1) {
+                        playMode = "clear";
+                        playTime = 0;
+                        paused = true;
+                        if (shuffle) {
+                            unsuffle();
+                        }
+                        shuffle = false;
+                        break;
+                    } else {
+                        playTime -= currentPlaylist.getSongs().get(songIndex).getDuration();
+                        songIndex += 1;
+                    }
+                }
+                break;
+            case ("repeat all"):
+                // In this case the player does not reset, it always plays the next song
+                while (playTime > currentPlaylist.getSongs().get(songIndex).getDuration()) {
+                    playTime -= currentPlaylist.getSongs().get(songIndex).getDuration();
+                    songIndex = (songIndex + 1) % currentPlaylist.getSongs().size();
+                }
+                break;
+            case ("repeat current song"):
+                // In this case the player does not reset, it always plays the same song
+                playTime = playTime
+                        - (playTime / currentPlaylist.getSongs().get(songIndex).getDuration())
+                        * currentPlaylist.getSongs().get(songIndex).getDuration();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Updates the status of a podcast based on the current repeat mode.
+     * @param history The PodcastHistory object for the current podcast.
+     */
+    private void updateStatusPodcast(final PodcastHistory history) {
+        while (playTime > currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration()
+                - history.getSecond()) {
+            if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
+                history.setLastEpisode(0);
+                history.setSecond(0);
+                playMode = "clear";
+                playTime = 0;
+                paused = true;
+                break;
+            } else {
+                int duration = currentPodcast.getEpisodes().get(history.getLastEpisode())
+                        .getDuration();
+                playTime = playTime - (duration - history.getSecond());
+                history.setLastEpisode(history.getLastEpisode() + 1);
+                history.setSecond(0);
+            }
+        }
+    }
+
+    /**
+     * Calculates the player status for a podcast based on the current repeat mode.
+     */
+    private void calculateStatusPodcast() {
+        // Retrieve the podcast history for the current podcast.
+        PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
+        int duration = currentPodcast.getEpisodes().get(history.getLastEpisode())
+                .getDuration();
+        switch (repeat) {
+            // If repeat mode is "no repeat", update the podcast status
+            case ("no repeat"):
+                updateStatusPodcast(history);
+                break;
+            case ("repeat once"):
+                while (playTime > duration - history.getSecond()) {
+                    // If it is the last episode, change the repeat mode to "no repeat" and start
+                    // playing the first episode
+                    if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
+                        history.setLastEpisode(0);
+                        history.setSecond(0);
+                        repeat = "no repeat";
+                        duration = currentPodcast.getEpisodes().get(history.getLastEpisode())
+                                .getDuration();
+                        playTime = playTime - duration;
+
+                        updateStatusPodcast(history);
+                        break;
+                    } else {
+                        playTime = playTime - (duration - history.getSecond());
+                        history.setLastEpisode(history.getLastEpisode() + 1);
+                        history.setSecond(0);
+                    }
+                    duration = currentPodcast.getEpisodes().get(history.getLastEpisode())
+                            .getDuration();
+                }
+                break;
+            case ("repeat infinite"):
+                // Repeats the podcast infinitely and calculates the play time
+                duration = currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration();
+                while (playTime > duration - history.getSecond()) {
+                    playTime = playTime - (duration - history.getSecond());
+                    history.setLastEpisode((history.getLastEpisode() + 1)
+                            % currentPodcast.getEpisodes().size());
+                    history.setSecond(0);
+                    duration = currentPodcast.getEpisodes().get(history.getLastEpisode())
+                            .getDuration();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    /**
+     * Calculates the player status based on the current play mode.
+     * @param commandTimestamp The timestamp of the command.
+     */
+    private void calculateStatus(final Integer commandTimestamp) {
         if (!paused && !playMode.equals("clear")) {
             playTime += commandTimestamp - lastCommandTimestamp;
         }
@@ -97,123 +276,28 @@ public class Player {
             case ("clear"):
                 break;
             case ("song"):
-                switch (repeat) {
-                    case ("no repeat"):
-                        if (playTime > currentSong.getDuration()) {
-                            playMode = "clear";
-                            playTime = 0;
-                            paused = true;
-                        }
-                        break;
-                    case ("repeat once"):
-                        if (playTime > currentSong.getDuration()) {
-                            playTime -= currentSong.getDuration();
-                            repeat = "no repeat";
-
-                            if (playTime > currentSong.getDuration()) {
-                                playMode = "clear";
-                                playTime = 0;
-                                paused = true;
-                            }
-                        }
-                        break;
-                    case ("repeat infinite"):
-                        playTime = playTime - (int) (playTime / currentSong.getDuration()) * currentSong.getDuration();
-                        break;
-                }
+                calculateStatusSong();
                 break;
             case ("playlist"):
-                switch (repeat) {
-                    case ("no repeat"):
-                        while (playTime > currentPlaylist.getSongs().get(songIndex).getDuration()) {
-                            if (songIndex == currentPlaylist.getSongs().size() - 1) {
-                                playMode = "clear";
-                                playTime = 0;
-                                paused = true;
-                                shuffle = false;
-                                break;
-                            } else {
-                                playTime = playTime - currentPlaylist.getSongs().get(songIndex).getDuration();
-                                songIndex += 1;
-                            }
-                        }
-                        break;
-                    case ("repeat all"):
-                        while (playTime > currentPlaylist.getSongs().get(songIndex).getDuration()) {
-                            playTime = playTime - currentPlaylist.getSongs().get(songIndex).getDuration();
-                            songIndex = (songIndex + 1) % currentPlaylist.getSongs().size();
-                        }
-                        break;
-                    case ("repeat current song"):
-                        playTime = playTime - (int) (playTime / currentPlaylist.getSongs().get(songIndex).getDuration()) * currentPlaylist.getSongs().get(songIndex).getDuration();
-                        break;
-                }
+                calculateStatusPlaylist();
                 break;
             case ("podcast"):
-                PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
-                switch (repeat) {
-                    case ("no repeat"):
-                        while (playTime > currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond()) {
-                            if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
-                                history.setLastEpisode(0);
-                                history.setSecond(0);
-                                playMode = "clear";
-                                playTime = 0;
-                                paused = true;
-                                break;
-                            } else {
-                                playTime = playTime - (currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond());
-                                history.setLastEpisode(history.getLastEpisode() + 1);
-                                history.setSecond(0);
-                            }
-                        }
-                        break;
-                    case ("repeat once"):
-                        while (playTime > currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond()) {
-                            if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
-                                history.setLastEpisode(0);
-                                history.setSecond(0);
-                                repeat = "no repeat";
-                                playTime = playTime - currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond();
-
-                                while (playTime > currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond()) {
-                                    if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
-                                        history.setLastEpisode(0);
-                                        history.setSecond(0);
-                                        playMode = "clear";
-                                        playTime = 0;
-                                        paused = true;
-                                        break;
-                                    } else {
-                                        playTime = playTime - (currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond());
-                                        history.setLastEpisode(history.getLastEpisode() + 1);
-                                        history.setSecond(0);
-                                    }
-                                }
-                                break;
-                            } else {
-                                playTime = playTime - (currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond());
-                                history.setLastEpisode(history.getLastEpisode() + 1);
-                                history.setSecond(0);
-                            }
-                        }
-                        break;
-                    case ("repeat infinite"):
-                        while (playTime > currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond()) {
-                            playTime = playTime - (currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - history.getSecond());
-                            history.setLastEpisode((history.getLastEpisode() + 1) % currentPodcast.getEpisodes().size());
-                            history.setSecond(0);
-                        }
-                        break;
-                }
+                calculateStatusPodcast();
+                break;
+            default:
                 break;
         }
     }
 
-    public ObjectNode status(Integer commandTimestamp) {
+    /**
+     * Returns the player status as a JSON object.
+     * @param commandTimestamp The timestamp of the command.
+     * @return The player status as a JSON object.
+     */
+    public ObjectNode status(final Integer commandTimestamp) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode newNode = objectMapper.createObjectNode();
-        CalculateStatus(commandTimestamp);
+        calculateStatus(commandTimestamp);
 
         switch (playMode) {
             case ("song"):
@@ -222,28 +306,31 @@ public class Player {
                 break;
             case ("playlist"):
                 newNode.put("name", currentPlaylist.getSongs().get(songIndex).getName());
-                newNode.put("remainedTime", currentPlaylist.getSongs().get(songIndex).getDuration() - playTime);
+                newNode.put("remainedTime",
+                        currentPlaylist.getSongs().get(songIndex).getDuration() - playTime);
                 break;
             case ("podcast"):
                 PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
-                newNode.put("name", currentPodcast.getEpisodes().get(history.getLastEpisode()).getName());
-                newNode.put("remainedTime", currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - playTime - history.getSecond());
+                newNode.put("name",
+                        currentPodcast.getEpisodes().get(history.getLastEpisode()).getName());
+                newNode.put("remainedTime",
+                        currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration()
+                                - playTime - history.getSecond());
                 break;
             case ("clear"):
                 newNode.put("name", "");
                 newNode.put("remainedTime", playTime);
                 break;
+            default:
+                break;
         }
-        if (repeat.equals("no repeat")) {
-            newNode.put("repeat", "No Repeat");
-        } else if (repeat.equals("repeat all")) {
-            newNode.put("repeat", "Repeat All");
-        } else if (repeat.equals("repeat current song")) {
-            newNode.put("repeat", "Repeat Current Song");
-        } else if (repeat.equals("repeat once")) {
-            newNode.put("repeat", "Repeat Once");
-        } else if (repeat.equals("repeat infinite")) {
-            newNode.put("repeat", "Repeat Infinite");
+        switch (repeat) {
+            case "no repeat" -> newNode.put("repeat", "No Repeat");
+            case "repeat all" -> newNode.put("repeat", "Repeat All");
+            case "repeat current song" -> newNode.put("repeat", "Repeat Current Song");
+            case "repeat once" -> newNode.put("repeat", "Repeat Once");
+            case "repeat infinite" -> newNode.put("repeat", "Repeat Infinite");
+            default -> throw new IllegalStateException("Unexpected value: " + repeat);
         }
 
         newNode.put("shuffle", shuffle);
@@ -253,24 +340,35 @@ public class Player {
         return newNode;
     }
 
-    public void playPause(Integer commandTimestamp) {
-        CalculateStatus(commandTimestamp);
+    /**
+     * Plays or pauses the player.
+     * @param commandTimestamp The timestamp of the command.
+     */
+    public void playPause(final Integer commandTimestamp) {
+        calculateStatus(commandTimestamp);
         paused = !paused;
         lastCommandTimestamp = commandTimestamp;
     }
 
-    public String repeat(Integer commandTimestamp) {
-        CalculateStatus(commandTimestamp);
+    /**
+     * Changes the repeat mode.
+     * @param commandTimestamp The timestamp of the command.
+     * @return The new repeat mode.
+     */
+    public String repeat(final Integer commandTimestamp) {
+        calculateStatus(commandTimestamp);
 
         if (repeat.equals("repeat current song") || repeat.equals("repeat infinite")) {
             repeat = "no repeat";
         } else if (playMode.equals("playlist") && repeat.equals("no repeat")) {
             repeat = "repeat all";
-        } else if ((playMode.equals("song") || playMode.equals("podcast")) && repeat.equals("no repeat")) {
+        } else if ((playMode.equals("song") || playMode.equals("podcast"))
+                && repeat.equals("no repeat")) {
             repeat = "repeat once";
         } else if (playMode.equals("playlist") && repeat.equals("repeat all")) {
             repeat = "repeat current song";
-        } else if ((playMode.equals("song") || playMode.equals("podcast")) && repeat.equals("repeat once")) {
+        } else if ((playMode.equals("song") || playMode.equals("podcast"))
+                && repeat.equals("repeat once")) {
             repeat = "repeat infinite";
         }
 
@@ -278,8 +376,13 @@ public class Player {
         return repeat;
     }
 
-    public boolean like(Command command) {
-        CalculateStatus(command.getTimestamp());
+    /**
+     * Likes or unlikes a song.
+     * @param command The command object.
+     * @return True if the song is liked, false otherwise.
+     */
+    public boolean like(final Command command) {
+        calculateStatus(command.getTimestamp());
         lastCommandTimestamp = command.getTimestamp();
 
         Song song;
@@ -296,119 +399,171 @@ public class Player {
         }
 
         likedSongs.add(song);
-        currentSong.likeSong();
+        song.likeSong();
         return true;
     }
 
-    public void next(Command command, ObjectNode resultNode) {
-        CalculateStatus(command.getTimestamp());
-        switch (playMode) {
-            case "song":
-                switch (repeat) {
-                    case ("no repeat"):
-                        playMode = "clear";
-                        paused = true;
-                        resultNode.put("message", "Please load a source before skipping to the next track.");
-                        break;
-                    case ("repeat once"):
-                        repeat = "no repeat";
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " + currentSong.getName() + ".");
-                        paused = false;
-                        break;
-                    case ("repeat infinite"):
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " + currentSong.getName() + ".");
-                        paused = false;
-                        break;
-                }
-                playTime = 0;
+    private void nextSong(final ObjectNode resultNode) {
+        switch (repeat) {
+            case ("no repeat"):
+                playMode = "clear";
+                paused = true;
+                resultNode.put("message",
+                        "Please load a source before skipping to the next track.");
                 break;
-            case "playlist":
-                switch (repeat) {
-                    case ("no repeat"):
-                        if (songIndex == currentPlaylist.getSongs().size() - 1) {
-                            playMode = "clear";
-                            paused = true;
-                            shuffle = false;
-                            resultNode.put("message", "Please load a source before skipping to the next track.");
-                        } else {
-                            songIndex++;
-                            resultNode.put("message", "Skipped to next track successfully. The current track is " + currentPlaylist.getSongs().get(songIndex).getName() + ".");
-                            paused = false;
-                        }
-                        break;
-                    case ("repeat all"):
-                        songIndex = (songIndex + 1) % currentPlaylist.getSongs().size();
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " + currentPlaylist.getSongs().get(songIndex).getName() + ".");
-                        paused = false;
-                        break;
-                    case ("repeat current song"):
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " + currentPlaylist.getSongs().get(songIndex).getName() + ".");
-                        paused = false;
-                        break;
-                }
-                playTime = 0;
+            case ("repeat once"):
+                repeat = "no repeat";
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentSong.getName() + ".");
+                paused = false;
                 break;
-            case "podcast":
-                PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
-                switch (repeat) {
-                    case ("no repeat"):
-                        if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
-                            playMode = "clear";
-                            paused = true;
-                            history.setSecond(0);
-                            history.setLastEpisode(0);
-                            resultNode.put("message", "Please load a source before skipping to the next track.");
-                        } else {
-                            history.setSecond(0);
-                            history.setLastEpisode(history.getLastEpisode() + 1);
-                            resultNode.put("message", "Skipped to next track successfully. The current track is " +
-                                    currentPodcast.getEpisodes().get(history.getLastEpisode()).getName() + ".");
-                            paused = false;
-                        }
-                        break;
-                    case ("repeat once"):
-                        if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
-                            repeat = "no repeat";
-                            history.setLastEpisode(0);
-                            history.setSecond(0);
-                        } else {
-                            history.setSecond(0);
-                            history.setLastEpisode(history.getLastEpisode() + 1);
-                        }
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " +
-                                currentPodcast.getEpisodes().get(history.getLastEpisode()).getName() + ".");
-                        paused = false;
-                        break;
-                    case ("repeat infinite"):
-                        history.setLastEpisode((history.getLastEpisode() + 1) % currentPodcast.getEpisodes().size());
-                        history.setSecond(0);
-                        resultNode.put("message", "Skipped to next track successfully. The current track is " +
-                                currentPodcast.getEpisodes().get(history.getLastEpisode()).getName() + ".");
-                        paused = false;
-                        break;
+            case ("repeat infinite"):
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentSong.getName() + ".");
+                paused = false;
+                break;
+            default:
+                break;
+
+        }
+    }
+
+    private void nextPlaylist(final ObjectNode resultNode) {
+        switch (repeat) {
+            case ("no repeat"):
+                if (songIndex == currentPlaylist.getSongs().size() - 1) {
+                    playMode = "clear";
+                    paused = true;
+                    if (shuffle) {
+                        unsuffle();
+                    }
+                    shuffle = false;
+                    resultNode.put("message",
+                            "Please load a source before skipping to the next track.");
+                } else {
+                    songIndex++;
+                    resultNode.put("message",
+                            "Skipped to next track successfully. The current track is "
+                                    + currentPlaylist.getSongs().get(songIndex).getName() + ".");
+                    paused = false;
                 }
-                playTime = 0;
+                break;
+            case ("repeat all"):
+                songIndex = (songIndex + 1) % currentPlaylist.getSongs().size();
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentPlaylist.getSongs().get(songIndex).getName() + ".");
+                paused = false;
+                break;
+            case ("repeat current song"):
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentPlaylist.getSongs().get(songIndex).getName() + ".");
+                paused = false;
+                break;
+            default:
                 break;
         }
+
+    }
+
+    private void nextPodcast(final ObjectNode resultNode) {
+        PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
+        switch (repeat) {
+            case ("no repeat"):
+                if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
+                    playMode = "clear";
+                    paused = true;
+                    history.setSecond(0);
+                    history.setLastEpisode(0);
+                    resultNode.put("message",
+                            "Please load a source before skipping to the next track.");
+                } else {
+                    history.setSecond(0);
+                    history.setLastEpisode(history.getLastEpisode() + 1);
+                    resultNode.put("message",
+                            "Skipped to next track successfully. The current track is "
+                                    + currentPodcast.getEpisodes().get(history.getLastEpisode())
+                                    .getName() + ".");
+                    paused = false;
+                }
+                break;
+            case ("repeat once"):
+                if (history.getLastEpisode() == currentPodcast.getEpisodes().size() - 1) {
+                    repeat = "no repeat";
+                    history.setLastEpisode(0);
+                    history.setSecond(0);
+                } else {
+                    history.setSecond(0);
+                    history.setLastEpisode(history.getLastEpisode() + 1);
+                }
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentPodcast.getEpisodes().get(history.getLastEpisode())
+                                .getName() + ".");
+                paused = false;
+                break;
+            case ("repeat infinite"):
+                history.setLastEpisode((history.getLastEpisode() + 1)
+                        % currentPodcast.getEpisodes().size());
+                history.setSecond(0);
+                resultNode.put("message",
+                        "Skipped to next track successfully. The current track is "
+                                + currentPodcast.getEpisodes().get(history.getLastEpisode())
+                                .getName() + ".");
+                paused = false;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Skips to the next track depending on the current repeat mode.
+     * @param  command The given command
+     * @param resultNode The JSON object
+     */
+    public void next(final Command command, final ObjectNode resultNode) {
+        calculateStatus(command.getTimestamp());
+        switch (playMode) {
+            case "song":
+                nextSong(resultNode);
+                break;
+            case "playlist":
+                nextPlaylist(resultNode);
+                break;
+            case "podcast":
+                nextPodcast(resultNode);
+                break;
+            default:
+                break;
+        }
+        playTime = 0;
         lastCommandTimestamp = command.getTimestamp();
     }
 
-    public void prev(Command command, ObjectNode resultNode) {
-        CalculateStatus(command.getTimestamp());
+    /**
+     * Skips to the previous track depending on the current player status.
+     * @param command The given command
+     * @param resultNode The JSON object
+     */
+    public void prev(final Command command, final ObjectNode resultNode) {
+        calculateStatus(command.getTimestamp());
         switch (playMode) {
             case "song":
-                resultNode.put("message", "Returned to previous track successfully. The current track is " + currentSong.getName() + ".");
+                resultNode.put("message",
+                        "Returned to previous track successfully. The current track is "
+                                + currentSong.getName() + ".");
                 break;
             case "playlist":
-                System.out.println("----------------------------------------------");
-                System.out.println("timestamp = " + command.getTimestamp() + "user = " + command.getUsername());
-                System.out.println("songIndex = " + songIndex + " playTime = " + playTime + " paused = " + paused);
-
-
                 if (songIndex != 0 && playTime == 0 && !paused) {
                     songIndex--;
                 }
-                resultNode.put("message", "Returned to previous track successfully. The current track is " + currentPlaylist.getSongs().get(songIndex).getName() + ".");
+                resultNode.put("message",
+                        "Returned to previous track successfully. The current track is "
+                                + currentPlaylist.getSongs().get(songIndex).getName() + ".");
                 break;
             case "podcast":
                 PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
@@ -416,28 +571,37 @@ public class Player {
                     history.setLastEpisode(history.getLastEpisode() - 1);
                 }
                 history.setSecond(0);
-                resultNode.put("message", "Returned to previous track successfully. The current track is " +
-                        currentPodcast.getEpisodes().get(history.getLastEpisode()).getName() + ".");
+                resultNode.put("message",
+                        "Returned to previous track successfully. The current track is "
+                                + currentPodcast.getEpisodes().get(history.getLastEpisode())
+                                .getName() + ".");
+                break;
+            default:
                 break;
         }
         playTime = 0;
         paused = false;
         lastCommandTimestamp = command.getTimestamp();
-        System.out.println("songIndex = " + songIndex + " playTime = " + playTime + " paused = " + paused);
-        System.out.println("----------------------------------------------");
     }
 
-    public void forwardBackward(Command command) {
-        CalculateStatus(command.getTimestamp());
+    /**
+     * Skips forward or backward ninety seconds depending on the current player status.
+     * @param command The given command
+     */
+    public void forwardBackward(final Command command) {
+        calculateStatus(command.getTimestamp());
         PodcastHistory history = podcastsHistory.get(currentPodcast.getName());
         if (command.getCommand().equals("forward")) {
-            int remainedTime = currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration() - playTime - history.getSecond();
-            if (remainedTime <= 90 && history.getLastEpisode() != currentPodcast.getEpisodes().size() - 1) {
+            int remainedTime = currentPodcast.getEpisodes()
+                    .get(history.getLastEpisode()).getDuration() - playTime - history.getSecond();
+            if (remainedTime <= SECONDS && history.getLastEpisode()
+                    != currentPodcast.getEpisodes().size() - 1) {
                 history.setLastEpisode(history.getLastEpisode() + 1);
                 history.setSecond(0);
                 playTime = 0;
-            } else if (remainedTime > 90 && history.getLastEpisode() != currentPodcast.getEpisodes().size() - 1) {
-                playTime += 90;
+            } else if (remainedTime > SECONDS && history.getLastEpisode()
+                    != currentPodcast.getEpisodes().size() - 1) {
+                playTime += SECONDS;
             } else {
                 history.setLastEpisode(0);
                 history.setSecond(0);
@@ -445,35 +609,50 @@ public class Player {
             }
         } else {
             int currentTime = playTime + history.getSecond();
-            if (currentTime <= 90) {
+            if (currentTime <= SECONDS) {
                 history.setSecond(0);
                 playTime = 0;
             } else {
-                playTime -= 90;
+                playTime -= SECONDS;
             }
         }
 
         lastCommandTimestamp = command.getTimestamp();
     }
 
-    public void shuffle(Command command, ObjectNode resultNode) {
-        CalculateStatus(command.getTimestamp());
+    /**
+     * Unsuflles the playlist depending on the current player status.
+     */
+    private void unsuffle() {
+        songIndex = unsuffledSongs.indexOf(currentPlaylist.getSongs().get(songIndex));
+        currentPlaylist.setSongs(unsuffledSongs);
+    }
+
+    /**
+     * Activates or deactivates the shuffle function depending on the current player status.
+     * @param command The given command
+     * @param resultNode The JSON object
+     */
+    public void shuffle(final Command command, final ObjectNode resultNode) {
+        calculateStatus(command.getTimestamp());
 
         if (playMode.equals("clear")) {
-            resultNode.put("message", "Please load a source before using the shuffle function.");
+            resultNode.put("message",
+                    "Please load a source before using the shuffle function.");
             return;
         }
 
         if (!playMode.equals("playlist")) {
-            resultNode.put("message", "The loaded source is not a playlist.");
+            resultNode.put("message",
+                    "The loaded source is not a playlist.");
             return;
         }
 
         if (shuffle) {
-            songIndex = unsuffledSongs.indexOf(currentPlaylist.getSongs().get(songIndex));
-            currentPlaylist.setSongs(unsuffledSongs);
+            unsuffle();
             shuffle = false;
-            resultNode.put("message", "Shuffle function deactivated successfully.");
+            resultNode.put("message",
+                    "Shuffle function deactivated successfully.");
         } else {
             unsuffledSongs = new ArrayList<>(currentPlaylist.getSongs());
             ArrayList<Song> shuffledSongs = new ArrayList<>(currentPlaylist.getSongs());
@@ -486,107 +665,69 @@ public class Player {
         lastCommandTimestamp = command.getTimestamp();
     }
 
+    /**
+     * Returns the current song.
+     * @return The current song.
+     */
     public Song getCurrentSong() {
         return currentSong;
     }
 
-    public void setCurrentSong(Song currentSong) {
-        this.currentSong = currentSong;
-    }
-
+    /**
+     * Returns the current playlist.
+     * @return The current playlist.
+     */
     public Playlist getCurrentPlaylist() {
         return currentPlaylist;
     }
 
-    public void setCurrentPlaylist(Playlist currentPlaylist) {
-        this.currentPlaylist = currentPlaylist;
-    }
-
-    public Podcast getCurrentPodcast() {
-        return currentPodcast;
-    }
-
-    public void setCurrentPodcast(Podcast currentPodcast) {
-        this.currentPodcast = currentPodcast;
-    }
-
-    public Integer getSongIndex() {
-        return songIndex;
-    }
-
-    public void setSongIndex(Integer songIndex) {
-        this.songIndex = songIndex;
-    }
-
-    public Integer getLastCommandTimestamp() {
-        return lastCommandTimestamp;
-    }
-
-    public void setLastCommandTimestamp(Integer lastCommandTimestamp) {
-        this.lastCommandTimestamp = lastCommandTimestamp;
-    }
-
-    public Integer getPlayTime() {
-        return playTime;
-    }
-
-    public void setPlayTime(Integer playTime) {
-        this.playTime = playTime;
-    }
-
+    /**
+     * @return The current player mode.
+     */
     public String getPlayMode() {
         return playMode;
     }
 
-    public void setPlayMode(String playMode) {
-        this.playMode = playMode;
-    }
-
-    public HashMap<String, PodcastHistory> getPodcastsHistory() {
-        return podcastsHistory;
-    }
-
-    public void setPodcastsHistory(HashMap<String, PodcastHistory> podcastsHistory) {
-        this.podcastsHistory = podcastsHistory;
-    }
-
+    /**
+     * @return The current repeat mode.
+     */
     public String getRepeat() {
         return repeat;
     }
 
-    public void setRepeat(String repeat) {
-        this.repeat = repeat;
-    }
-
+    /**
+     * @return if the playlist is shuffled or not.
+     */
     public boolean isShuffle() {
         return shuffle;
     }
 
-    public void setShuffle(boolean shuffle) {
-        this.shuffle = shuffle;
-    }
-
+    /**
+     * @return if the player is paused or not.
+     */
     public boolean isPaused() {
         return paused;
     }
 
-    public void setPaused(boolean paused) {
+    /**
+     * Sets the player to paused or not.
+     * @param paused the current state of the player.
+     */
+    public void setPaused(final boolean paused) {
         this.paused = paused;
     }
 
-    public int getPausedTime() {
-        return pausedTime;
-    }
-
-    public void setPausedTime(int pausedTime) {
-        this.pausedTime = pausedTime;
-    }
-
+    /**
+     * @return The array of liked songs.
+     */
     public ArrayList<Song> getLikedSongs() {
         return likedSongs;
     }
 
-    public void setLikedSongs(ArrayList<Song> likedSongs) {
-        this.likedSongs = likedSongs;
+    /**
+     * @return Returns the unsuffled playlist.
+     */
+    public ArrayList<Song> getUnsuffledSongs() {
+        return unsuffledSongs;
     }
 }

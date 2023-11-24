@@ -1,12 +1,9 @@
 package main;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Command {
     private String command;
@@ -15,94 +12,169 @@ public class Command {
     private Integer itemNumber;
     private Integer seed;
     private Integer playlistId;
-
     private String playlistName;
-
     private String type;
     private HashMap<String, Object> filters;
 
+    /**
+     * Retrieves the filters associated with the command.
+     *
+     * @return A HashMap containing filters for the command.
+     */
     public HashMap<String, Object> getFilters() {
         return filters;
     }
 
-    public void setFilters(HashMap<String, Object> filters) {
+    /**
+     * Sets the filters for the command.
+     *
+     * @param filters A HashMap containing filters to be set for the command.
+     */
+    public void setFilters(final HashMap<String, Object> filters) {
         this.filters = filters;
     }
 
+    /**
+     * Retrieves the type of the command.
+     *
+     * @return A String representing the type of the command.
+     */
     public String getType() {
         return type;
     }
 
-
-    public void setType(String type) {
+    /**
+     * Sets the type for the command.
+     *
+     * @param type A String representing the type to be set for the command.
+     */
+    public void setType(final String type) {
         this.type = type;
     }
 
-
+    /**
+     * Retrieves the command string.
+     *
+     * @return A String representing the command string.
+     */
     public String getCommand() {
         return command;
     }
 
-    public void setCommand(String command) {
+    /**
+     * Sets the command string.
+     *
+     * @param command A String representing the command string to be set.
+     */
+    public void setCommand(final String command) {
         this.command = command;
     }
 
+    /**
+     * Retrieves the username associated with the command.
+     *
+     * @return A String representing the username associated with the command.
+     */
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    /**
+     * Sets the username for the command.
+     *
+     * @param username A String representing the username to be set for the command.
+     */
+    public void setUsername(final String username) {
         this.username = username;
     }
 
+    /**
+     * Retrieves the timestamp associated with the command.
+     *
+     * @return An Integer representing the timestamp associated with the command.
+     */
     public Integer getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Integer timestamp) {
+    /**
+     * Sets the timestamp for the command.
+     *
+     * @param timestamp An Integer representing the timestamp to be set for the command.
+     */
+    public void setTimestamp(final Integer timestamp) {
         this.timestamp = timestamp;
     }
 
+    /**
+     * Retrieves the item number associated with the command.
+     *
+     * @return An Integer representing the item number associated with the command.
+     */
     public Integer getItemNumber() {
         return itemNumber;
     }
 
-    public void setItemNumber(Integer itemNumber) {
+    /**
+     * Sets the item number for the command.
+     *
+     * @param itemNumber An Integer representing the item number to be set for the command.
+     */
+    public void setItemNumber(final Integer itemNumber) {
         this.itemNumber = itemNumber;
     }
 
+    /**
+     * Retrieves the seed associated with the command.
+     *
+     * @return An Integer representing the seed associated with the command.
+     */
     public Integer getSeed() {
         return seed;
     }
 
-    public void setSeed(Integer seed) {
+    /**
+     * Sets the seed for the command.
+     *
+     * @param seed An Integer representing the seed to be set for the command.
+     */
+    public void setSeed(final Integer seed) {
         this.seed = seed;
     }
 
+    /**
+     * Retrieves the playlist ID associated with the command.
+     *
+     * @return An Integer representing the playlist ID associated with the command.
+     */
     public Integer getPlaylistId() {
         return playlistId;
     }
 
-    public void setPlaylistId(Integer playlistId) {
+    /**
+     * Sets the playlist ID for the command.
+     *
+     * @param playlistId An Integer representing the playlist ID to be set for the command.
+     */
+    public void setPlaylistId(final Integer playlistId) {
         this.playlistId = playlistId;
     }
 
+    /**
+     * Retrieves the playlist name associated with the command.
+     *
+     * @return A String representing the playlist name associated with the command.
+     */
     public String getPlaylistName() {
         return playlistName;
     }
 
-    public void setPlaylistName(String playlistName) {
+    /**
+     * Sets the playlist name for the command.
+     *
+     * @param playlistName A String representing the playlist name to be set for the command.
+     */
+    public void setPlaylistName(final String playlistName) {
         this.playlistName = playlistName;
-    }
-
-    @Override
-    public String toString() {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "{}";
-        }
     }
 }

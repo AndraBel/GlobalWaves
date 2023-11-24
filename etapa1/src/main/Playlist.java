@@ -1,97 +1,81 @@
 package main;
 
-import fileio.input.EpisodeInput;
-
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-public class Playlist {
-    private String name;
-    private String owner;
+/**
+ * Class representing a playlist
+ */
+public class Playlist extends AudioFiles {
     private ArrayList<Song> songs;
-    private ArrayList<Episode> episodes;
     private boolean visibility;
     private int followers;
 
-    public Playlist(String name, String owner) {
+    public Playlist(final String name, final String owner) {
         this.name = name;
         this.owner = owner;
         this.songs = new ArrayList<>();
-        this.episodes = new ArrayList<>();
         this.visibility = true;
         followers = 0;
     }
 
-    public boolean matchFilters (HashMap<String, Object> filters) {
-        for (Map.Entry<String, Object> filter: filters.entrySet()) {
-            switch (filter.getKey()) {
-                case "name":
-                    if (!this.name.startsWith((String) filter.getValue()))
-                        return false;
-                    break;
-                case "owner":
-                    if (!this.owner.equals((String) filter.getValue()))
-                        return false;
-                    break;
-            }
-        }
-        return true;
-    }
-
-    public void follow () {
+    /**
+     * Increases the follower count by one, representing a user following action.
+     */
+    public void follow() {
         followers++;
     }
 
-    public void unfollow () {
+    /**
+     * Decreases the follower count by one, representing a user unfollowing action.
+     */
+    public void unfollow() {
         followers--;
     }
 
-    public String getName() {
-        return name;
+    /**
+     * Sets the list of songs associated with the user.
+     *
+     * @param songs The ArrayList of Song objects to set as the user's songs.
+     */
+    public void setSongs(final ArrayList<Song> songs) {
+        this.songs = songs;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Sets the visibility status of the user's content.
+     *
+     * @param visibility The boolean value indicating the visibility status
+     *                   (true for visible, false for hidden).
+     */
+    public void setVisibility(final boolean visibility) {
+        this.visibility = visibility;
     }
 
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
+    /**
+     * Retrieves the list of songs associated with the user.
+     *
+     * @return An ArrayList of Song objects representing the songs associated with the user.
+     */
     public ArrayList<Song> getSongs() {
         return songs;
     }
 
-    public void setSongs(ArrayList<Song> songs) {
-        this.songs = songs;
-    }
-
-    public ArrayList<Episode> getEpisodes() {
-        return episodes;
-    }
-
-    public void setEpisodes(ArrayList<Episode> episodes) {
-        this.episodes = episodes;
-    }
-
-    public boolean getVisibility() {
+    /**
+     * Retrieves the visibility status of the user's content.
+     *
+     * @return A boolean value indicating the visibility status
+     * (true for visible, false for hidden).
+     */
+    public boolean isVisibility() {
         return visibility;
     }
 
-    public void setVisibility(boolean visibility) {
-        this.visibility = visibility;
-    }
-
+    /**
+     * Retrieves the count of followers for the user.
+     *
+     * @return An integer representing the number of followers the user has.
+     */
     public int getFollowers() {
         return followers;
-    }
-
-    public void setFollowers(int followers) {
-        this.followers = followers;
     }
 }
