@@ -1,4 +1,4 @@
-package app.users.publicity;
+package app.users.userComponents.publicity;
 
 public class Merch extends Publicity {
     private final Integer price;

@@ -1,6 +1,6 @@
 package app.users;
 
-import app.users.publicity.Announcement;
+import app.users.userComponents.publicity.Announcement;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
 import app.userPages.HostPage;

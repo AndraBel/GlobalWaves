@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import app.audioFiles.audioCollection.Album;
 import app.audioFiles.Song;
 import app.userPages.ArtistPage;
-import app.users.publicity.Event;
-import app.users.publicity.Merch;
+import app.users.userComponents.publicity.Event;
+import app.users.userComponents.publicity.Merch;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

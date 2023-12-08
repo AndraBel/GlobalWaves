@@ -16,9 +16,9 @@ import app.audioFiles.podcasts.Podcast;
 import app.users.Artist;
 import app.users.Host;
 import app.users.User;
-import app.users.publicity.Announcement;
-import app.users.publicity.Event;
-import app.users.publicity.Merch;
+import app.users.userComponents.publicity.Announcement;
+import app.users.userComponents.publicity.Event;
+import app.users.userComponents.publicity.Merch;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -59,11 +59,11 @@ clasa Publicity unde se gasesc variabilele si metodele comune acestora.
 ### <span style="color:Aquamarine">Album, Playlist</span> extend:
     > AudioFilesCollection
 ### <span style="color:Aquamarine">ArtistPage, HomePage, HostPage,
-### <span style="color:Aquamarine">LikedContentPage</span> extend:
+### <span style="color:LikedContentPage</span> extend:
     > Page
 ### <span style="color:Aquamarine">ArtistPage, HomePage, HostPage,
-### <span style="color:Aquamarine">LikedContentPage</span> implement:    
-    > PageAccept
+### <span style="color:LikedContentPage</span> implement:    
+> PageAccept
 ### <span style="color:Aquamarine">PagePrinter</span> implements:
     > PageVisitor
     > se foloseste design pattern-ul Visitor pentru a afisa continutul paginii

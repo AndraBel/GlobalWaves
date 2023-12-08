@@ -3,7 +3,7 @@ package app.userPages;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
-import app.users.publicity.Announcement;
+import app.users.userComponents.publicity.Announcement;
 
 import java.util.ArrayList;
 import java.util.List;
