@@ -33,7 +33,8 @@ public final class Main {
             "addMerch", "getAllUsers", "deleteUser", "addPodcast", "addAnnouncement",
             "removeAnnouncement", "showPodcasts", "removeAlbum", "removePodcast",
             "removeEvent", "getTop5Songs", "getTop5Playlists", "getTop5Albums",
-            "getTop5Artists", "wrapped"
+            "getTop5Artists", "wrapped", "subscribe", "getNotifications", "buyMerch",
+            "previousPage", "nextPage", "buyPremium", "cancelPremium"
     );
 
     /**
@@ -173,7 +174,7 @@ public final class Main {
                 outputs.add(mainLibrary.addPodcast(command));
                 break;
             case "changePage":
-                outputs.add(user.changePage(command));
+                outputs.add(user.changePage(command, mainLibrary));
                 break;
             case "deleteUser":
                 outputs.add(mainLibrary.deleteUser(command));
@@ -201,6 +202,45 @@ public final class Main {
                 break;
             case "wrapped":
                 outputs.add(mainLibrary.wrapped(command));
+                break;
+            case "subscribe":
+                outputs.add(mainLibrary.subscribe(command));
+                break;
+            case "getNotifications":
+                outputs.add(mainLibrary.getNotifications(command));
+                break;
+            case "buyMerch":
+                outputs.add(mainLibrary.buyMerch(command));
+                break;
+            case "seeMerch":
+                outputs.add(mainLibrary.seeMerch(command));
+                break;
+            case "updateRecommendations":
+                if (command.getRecommendationType().equals("fans_playlist")) {
+                    outputs.add(mainLibrary.fansPlaylist(command));
+                } else if (command.getRecommendationType().equals("random_song")) {
+                    outputs.add(mainLibrary.randomSong(command));
+                } else {
+                    outputs.add(mainLibrary.randomPlaylist(command));
+                }
+                break;
+            case "previousPage":
+                outputs.add(user.previousPage(command));
+                break;
+            case "nextPage":
+                outputs.add(user.nextPage(command));
+                break;
+            case "loadRecommendations":
+                outputs.add(user.loadRecommendations(command, mainLibrary));
+                break;
+            case "buyPremium":
+                outputs.add(mainLibrary.buyPremium(command));
+                break;
+            case "cancelPremium":
+                outputs.add(mainLibrary.cancelPremium(command));
+                break;
+            case "adBreak":
+                outputs.add(mainLibrary.adBreak(command));
                 break;
             default:
                 // Handle unknown command
@@ -255,6 +295,18 @@ public final class Main {
 
             handleCommand(mainLibrary, outputs, user, commandType, command);
         }
+
+        for (User user : mainLibrary.getUsers().values()) {
+            user.getPlayer().calculateStatus(commands.getLast().getTimestamp());
+        }
+
+        ObjectNode resultNode = objectMapper.createObjectNode();
+        ObjectNode resultNodeEndProgram = objectMapper.createObjectNode();
+
+//        resultNode.put("command", "endProgram");
+//        resultNode.set("result", resultNodeEndProgram);
+//        outputs.add(resultNode);
+        outputs.add(mainLibrary.endProgram());
 
         mainLibrary.resetInstance();
         ObjectWriter objectWriter = objectMapper.writerWithDefaultPrettyPrinter();

@@ -19,6 +19,7 @@ public class Song extends AudioFiles {
     private final int releaseYear;
     private final String artist;
     private int likes;
+    private double revenue;
 
     @JsonCreator
     public Song(@JsonProperty("name") final String name,
@@ -39,6 +40,7 @@ public class Song extends AudioFiles {
         this.artist = artist;
         likes = 0;
         listeners = 0;
+        revenue = 0;
     }
 
     /**
@@ -50,12 +52,12 @@ public class Song extends AudioFiles {
         for (Map.Entry<String, Object> filter : filters.entrySet()) {
             switch (filter.getKey()) {
                 case "name":
-                    if (!this.name.startsWith((String) filter.getValue())) {
+                    if (!this.name.toLowerCase().startsWith(((String) filter.getValue()).toLowerCase())) {
                         return false;
                     }
                     break;
                 case "album":
-                    if (!this.album.equals((String) filter.getValue())) {
+                    if (!this.album.equalsIgnoreCase(((String) filter.getValue()))) {
                         return false;
                     }
                     break;
@@ -89,7 +91,7 @@ public class Song extends AudioFiles {
                     }
                     break;
                 case "artist":
-                    if (!this.artist.equals((String) filter.getValue())) {
+                    if (!this.artist.equalsIgnoreCase((String) filter.getValue())) {
                         return false;
                     }
                     break;
@@ -98,6 +100,10 @@ public class Song extends AudioFiles {
             }
         }
         return true;
+    }
+
+    public void setRevenue(double revenue) {
+        this.revenue += revenue;
     }
 
     /**
@@ -144,5 +150,9 @@ public class Song extends AudioFiles {
 
     public String getAlbum() {
         return album;
+    }
+
+    public double getRevenue() {
+        return revenue;
     }
 }

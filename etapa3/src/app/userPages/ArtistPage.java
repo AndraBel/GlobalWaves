@@ -12,20 +12,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ArtistPage extends Page implements PageAccept {
+    private String name;
     private LinkedHashMap<String, Album> albums;
     private ArrayList<Event> events;
     private ArrayList<Merch> merch;
     private Integer listeners;
-
+    private double merchRevenue;
 
     public ArtistPage(final LinkedHashMap<String, Album> albums,
                       final ArrayList<Event> events,
-                      final ArrayList<Merch> merch) {
+                      final ArrayList<Merch> merch,
+                      final String name) {
         super(null, null);
         this.albums = albums;
         this.events = events;
         this.merch = merch;
         listeners = 0;
+        this.name = name;
+        merchRevenue = 0;
     }
 
     /**
@@ -85,10 +89,26 @@ public class ArtistPage extends Page implements PageAccept {
         listeners--;
     }
 
+    public void increaseMerchRevenue(final double price) {
+        merchRevenue += price;
+    }
+
     /**
      * @return the number of listeners
      */
     public Integer getListeners() {
         return listeners;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ArrayList<Merch> getMerch() {
+        return merch;
+    }
+
+    public double getMerchRevenue() {
+        return merchRevenue;
     }
 }

@@ -20,12 +20,12 @@ public class AudioFiles {
         for (Map.Entry<String, Object> filter : filters.entrySet()) {
             switch (filter.getKey()) {
                 case "name":
-                    if (!name.startsWith((String) filter.getValue())) {
+                    if (!name.toLowerCase().startsWith(((String) filter.getValue()).toLowerCase())) {
                         return false;
                     }
                     break;
                 case "owner":
-                    if (!owner.equals((String) filter.getValue())) {
+                    if (!owner.equalsIgnoreCase((String) filter.getValue())) {
                         return false;
                     }
                     break;

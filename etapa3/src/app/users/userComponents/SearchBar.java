@@ -10,9 +10,7 @@ import app.users.Host;
 import app.admin.Command;
 import app.admin.Library;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SearchBar {
     private final ArrayList<Song> songs;
@@ -21,6 +19,7 @@ public class SearchBar {
     private final ArrayList<Playlist> userPlaylists;
     private final ArrayList<Album> allAlbums;
     private static final int MAX_SEARCH_RESULTS = 5;
+    private ArrayList<Album> albumsResult;
 
     public SearchBar(final ArrayList<Song> songs,
                      final ArrayList<Podcast> podcasts,
@@ -32,6 +31,7 @@ public class SearchBar {
         this.allPlaylists = allPlaylists;
         this.userPlaylists = userPlaylists;
         this.allAlbums = allAlbums;
+        albumsResult = new ArrayList<>();
     }
 
     /**
@@ -93,7 +93,38 @@ public class SearchBar {
                     System.out.println("No albums found");
                     break;
                 }
-                matchFilters(allAlbums, command.getFilters(), result);
+//                matchFilters(allAlbums, command.getFilters(), result);
+//                ArrayList<Album> resultAlbums = new ArrayList<>();
+//                for (String albumName : result) {
+//                    Album album = library.findAlbum(albumName);
+//                    if (album != null) {
+//                        resultAlbums.add(album);
+//                    }
+//                }
+//
+//                result.clear();
+//                // sort the albums by the order of their artists
+//                for (Artist artist : library.getArtists().values()) {
+//                    for (Album album : resultAlbums) {
+//                        if (album.getArtist().equals(artist.getName())) {
+//                            result.add(album.getName());
+//                        }
+//                    }
+//                }
+                int index = 0;
+                for (Artist artist : library.getArtists().values()) {
+                    for (Map.Entry<String, Album> album : artist.getAlbums().entrySet()) {
+                        if (album.getValue().matchFilters(command.getFilters())) {
+                            albumsResult.add(album.getValue());
+                            result.add(album.getKey());
+                            index++;
+                            if (index == MAX_SEARCH_RESULTS) {
+                                return result;
+                            }
+                        }
+                    }
+                }
+
             }
             case "artist" -> {
                 int index = 0;
@@ -128,5 +159,13 @@ public class SearchBar {
             }
         }
         return result;
+    }
+
+    public void clearAlbumsResult() {
+        albumsResult.clear();
+    }
+
+    public ArrayList<Album> getAlbumsResult() {
+        return albumsResult;
     }
 }

@@ -23,18 +23,26 @@ public class Artist {
     private ArrayList<Event> events;
     private ArrayList<Merch> merch;
     private ArtistPage artistPage;
+    private boolean hasBeenListenedTo;
     private static final int MONTH_NR = 2;
     private static final int MIN_YEAR = 1900;
     private static final int MAX_YEAR = 2023;
     private static final int MAX_DAYS = 2023;
+    private Integer listeners;
+    private ArrayList<User> listenersList;
+    private double songRevenue;
 
     public Artist(final ArrayList<Album> allAlbums, final String username) {
         albums = new LinkedHashMap<>();
         this.allAlbums = allAlbums;
         events = new ArrayList<>();
         merch = new ArrayList<>();
-        artistPage = new ArtistPage(albums, events, merch);
+        artistPage = new ArtistPage(albums, events, merch, username);
         name = username;
+        hasBeenListenedTo = false;
+        listeners = 0;
+        listenersList = new ArrayList<>();
+        songRevenue = 0;
     }
 
     /**
@@ -204,6 +212,25 @@ public class Artist {
         return totalLikes;
     }
 
+    public void addSongRevenue(final double revenue) {
+        songRevenue += revenue;
+    }
+
+    public void setHasBeenListenedTo() {
+        hasBeenListenedTo = true;
+    }
+
+    public void increaseListeners() {
+        listeners++;
+    }
+
+    public void addListener(final User user) {
+        if(listenersList.contains(user)) {
+            return;
+        }
+        listenersList.add(user);
+    }
+
     /**
      * @return a hashmap of the artist's albums
      */
@@ -223,5 +250,20 @@ public class Artist {
      */
     public String getName() {
         return name;
+    }
+
+    public boolean getHasBeenListenedTo() {
+        return hasBeenListenedTo;
+    }
+    public Integer getListeners() {
+        return listeners;
+    }
+
+    public ArrayList<User> getListenersList() {
+        return listenersList;
+    }
+
+    public double getSongRevenue() {
+        return songRevenue;
     }
 }

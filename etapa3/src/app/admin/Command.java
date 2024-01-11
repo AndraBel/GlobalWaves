@@ -28,6 +28,7 @@ public class Command {
     private Integer price;
     private String nextPage;
     private ArrayList<Episode> episodes;
+    private String recommendationType;
 
     /**
      * Retrieves the filters associated with the command.
@@ -271,5 +272,9 @@ public class Command {
      */
     public ArrayList<Episode> getEpisodes() {
         return episodes;
+    }
+
+    public String getRecommendationType() {
+        return recommendationType;
     }
 }

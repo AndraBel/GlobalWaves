@@ -12,6 +12,7 @@ import app.userPages.PagePrinter;
 import app.userPages.PageVisitor;
 import app.users.userComponents.Player;
 import app.users.userComponents.SearchBar;
+import app.users.userComponents.publicity.Notifications;
 import app.users.userComponents.userInterfaces.PlayerCommands;
 import app.users.userComponents.userInterfaces.PlaylistCommands;
 import app.users.userComponents.userInterfaces.SearchBarCommands;
@@ -23,9 +24,8 @@ import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Podcast;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands {
     private String username;
@@ -50,12 +50,20 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
     private Page currentPage;
     private String currentPageType;
     private UsersHistory usersHistory;
-
+    private ArrayList<String> subscribeArtists;
+    private ArrayList<String> subscribeHosts;
+    private Notifications notifications;
+    private ArrayList<String> boughtMerch;
+    private LinkedHashMap<Page, String> pagesHistory;
+    private ArrayList<Host> listenedHosts;
+    private ArrayList<Artist> listenedArtists;
+    private boolean isPremium;
+//    private Album selectedAlbum;
 
     public User(final String username, final int age, final String city,
                 final ArrayList<Song> songs, final ArrayList<Podcast> podcasts,
                 final ArrayList<Playlist> allPlaylists,
-                final ArrayList<Album> allAlbums) {
+                final ArrayList<Album> allAlbums, final Library library) {
         this.username = username;
         this.age = age;
         this.city = city;
@@ -63,8 +71,12 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         this.searchBar = new SearchBar(songs, podcasts, allPlaylists, playlists, allAlbums);
         this.allPlaylists = allPlaylists;
         this.followingPlaylists = new ArrayList<>();
-        usersHistory = new UsersHistory();
-        this.player = new Player(usersHistory);
+        isPremium = false;
+
+        usersHistory = new UsersHistory(allAlbums);
+        this.player = new Player(usersHistory, isPremium, library, this);
+        usersHistory.setPlayer(player);
+
         isSearch = false;
         isSelect = false;
         lastSearchType = "";
@@ -75,6 +87,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         homePage = new HomePage(player.getLikedSongs(), followingPlaylists);
         likedPage = new LikedContentPage(player.getLikedSongs(), followingPlaylists);
         currentPage = homePage;
+        subscribeArtists = new ArrayList<>();
+        subscribeHosts = new ArrayList<>();
+        notifications = new Notifications();
+        boughtMerch = new ArrayList<>();
+        pagesHistory = new LinkedHashMap<>();
+        listenedHosts = new ArrayList<>();
+        listenedArtists = new ArrayList<>();
     }
 
     /**
@@ -112,6 +131,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             resultNode.set("results", resultsArray);
             return resultNode;
         }
+        player.calculateStatus(command.getTimestamp());
 
         // Update various tracking variables with the latest search command
         lastCommandSearch = command;
@@ -119,6 +139,15 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         isSearch = true;
         lastSearchType = command.getType();
         lastCommandResult = searchBar.search(command, library);
+
+//        if (command.getType().equals("album")) {
+//            int i = 0;
+//            System.out.println(command.getTimestamp());
+//            for (String albumName : lastCommandResult) {
+//                System.out.println(albumName + " by " + searchBar.getAlbumsResult().get(i).getArtist());
+//                i++;
+//            }
+//        }
 
         player.resetPlayer(command.getTimestamp());
 
@@ -149,6 +178,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             }
         }
         currentPageType = "artist";
+        pagesHistory.put(currentPage, currentPageType);
     }
 
     private void selectHost(final Command command, final ObjectNode resultNode,
@@ -166,6 +196,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             }
         }
         currentPageType = "host";
+        pagesHistory.put(currentPage, currentPageType);
     }
 
     /**
@@ -200,6 +231,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                     String result = lastCommandResult.get(command.getItemNumber() - 1);
                     lastCommandResult.clear();
                     lastCommandResult.add(result);
+
                     isSelect = true;
                     isSearch = false;
                     lastCommand = command;
@@ -278,11 +310,31 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             return resultNode;
         }
         isSelect = false;
-        lastCommand = command;
+//        lastCommand = command;
+        Artist artist;
+
         switch (lastCommandSearch.getType()) {
             case ("song"):
-                Song song = library.findSong(lastCommandResult.get(0));
+                Song song = library.findSong(lastCommandResult.getFirst());
                 usersHistory.addSong(song);
+
+                artist = library.findArtist(song.getArtist());
+
+                if (artist != null) {
+                    artist.setHasBeenListenedTo();
+                }
+
+                if (isPremium) {
+                    usersHistory.addSongPremium(song);
+                }
+
+                if (!listenedArtists.contains(artist)) {
+                    listenedArtists.add(artist);
+                    if (artist != null) {
+                        artist.increaseListeners();
+                        artist.addListener(this);
+                    }
+                }
 
                 player.load(song, command.getTimestamp());
                 assert song != null;
@@ -290,26 +342,54 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                 song.increaseListeners();
                 break;
             case ("playlist"):
-                Playlist playlist = findPlaylist(lastCommandResult.get(0));
+                Playlist playlist = findPlaylist(lastCommandResult.getFirst());
                 if (playlist == null) {
-                    playlist = library.findPlaylist(lastCommandResult.get(0));
+                    playlist = library.findPlaylist(lastCommandResult.getFirst());
                     assert playlist != null;
                 }
                 playlist.increaseListeners();
                 loadPlaylist(command, resultNode, playlist);
                 return resultNode;
             case ("podcast"):
-                Podcast podcast = library.findPodcast(lastCommandResult.get(0));
+                Podcast podcast = library.findPodcast(lastCommandResult.getFirst());
                 assert podcast != null;
 
                 usersHistory.addPodcast(podcast);
+
+                Host host = library.findHost(podcast.getOwner());
+
+                if (!listenedHosts.contains(host)) {
+                    listenedHosts.add(host);
+                    if (host != null) {
+                        host.increaseListeners();
+                        host.addListener(this);
+                    }
+                }
 
                 podcast.increaseListeners();
                 player.load(podcast, command.getTimestamp());
                 break;
             case ("album"):
-                Album album = library.findAlbum(lastCommandResult.get(0));
+//                Album album = library.findAlbum(lastCommandResult.getFirst());
+
+
+                Album album = searchBar.getAlbumsResult().get(lastCommand.getItemNumber() - 1);
+                searchBar.clearAlbumsResult();
+
                 assert album != null;
+                artist = library.findArtist(album.getArtist());
+
+                if (artist != null) {
+                    artist.setHasBeenListenedTo();
+                }
+
+                if (!listenedArtists.contains(artist)) {
+                    listenedArtists.add(artist);
+                    if (artist != null) {
+                        artist.increaseListeners();
+                        artist.addListener(this);
+                    }
+                }
 
                 usersHistory.addAlbum(album);
 
@@ -319,6 +399,8 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             default:
                 break;
         }
+        lastCommand = command;
+
         resultNode.put("message", "Playback loaded successfully.");
         return resultNode;
     }
@@ -849,7 +931,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
      * @param command The command given.
      * @return An ObjectNode representing the result of the status operation.
      */
-    public ObjectNode changePage(final Command command) {
+    public ObjectNode changePage(final Command command, final Library library) {
         ObjectNode resultNode = createResultNode(command);
 
         checkUserStatus(resultNode);
@@ -869,12 +951,32 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                 currentPageType = "home";
                 resultNode.put("message", command.getUsername()
                         + " accessed Home successfully.");
+                pagesHistory.put(currentPage, currentPageType);
+
                 break;
             case ("LikedContent"):
                 currentPage = likedPage;
                 currentPageType = "likedContent";
                 resultNode.put("message", command.getUsername()
                         + " accessed LikedContent successfully.");
+                pagesHistory.put(currentPage, currentPageType);
+
+                break;
+            case ("Artist"):
+                currentPage = player.getCurrentArtist(library).getArtistPage();
+                currentPageType = "artist";
+                resultNode.put("message", command.getUsername()
+                        + " accessed Artist successfully.");
+                pagesHistory.put(currentPage, currentPageType);
+
+                break;
+            case ("Host"):
+                currentPage = player.getCurrentHost(library).getHostPage();
+                currentPageType = "host";
+                resultNode.put("message", command.getUsername()
+                        + " accessed Host successfully.");
+                pagesHistory.put(currentPage, currentPageType);
+
                 break;
             default:
                 resultNode.put("message", command.getUsername()
@@ -884,6 +986,207 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
 
         lastCommand = command;
         return resultNode;
+    }
+
+    public int subscribeArtist(final String artist) {
+        if (subscribeArtists.contains(artist)) {
+            subscribeArtists.remove(artist);
+            return 0;
+        } else {
+            subscribeArtists.add(artist);
+            return 1;
+        }
+    }
+
+    public int subscribeHost(final String host) {
+        if (subscribeHosts.contains(host)) {
+            subscribeHosts.remove(host);
+            return 0;
+        } else {
+            subscribeHosts.add(host);
+            return 1;
+        }
+    }
+
+    public void buyMerch(final String merchName) {
+        boughtMerch.add(merchName);
+    }
+
+    public List<Map.Entry<String, Integer>> getTopGenres() {
+        LinkedHashMap<String, Integer> genres = new LinkedHashMap<>();
+
+        for (Song song : homePage.getLikedSongs()) {
+            if (genres.containsKey(song.getGenre())) {
+                int count = genres.get(song.getGenre());
+                genres.replace(song.getGenre(), count + 1);
+            } else {
+                genres.put(song.getGenre(), 1);
+            }
+        }
+
+        for (Playlist playlist : playlists) {
+            for (Song song : playlist.getSongs()) {
+                if (genres.containsKey(song.getGenre())) {
+                    int count = genres.get(song.getGenre());
+                    genres.replace(song.getGenre(), count + 1);
+                } else {
+                    genres.put(song.getGenre(), 1);
+                }
+            }
+        }
+
+        for (Playlist playlist : homePage.getFollowingPlaylists()) {
+            for (Song song : playlist.getSongs()) {
+                if (genres.containsKey(song.getGenre())) {
+                    int count = genres.get(song.getGenre());
+                    genres.replace(song.getGenre(), count + 1);
+                } else {
+                    genres.put(song.getGenre(), 1);
+                }
+            }
+        }
+
+        return genres.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(3)
+                .collect(Collectors.toList());
+    }
+
+    public ObjectNode nextPage(final Command command) {
+        ObjectNode resultNode = createResultNode(command);
+
+        Page lastPage = null;
+
+        // Iterate over the entry set to find the last entry
+        for (Map.Entry<Page, String> entry : pagesHistory.entrySet()) {
+            lastPage = entry.getKey();
+        }
+
+        if (currentPage.equals(lastPage)) {
+            resultNode.put("message", "There are no pages left to go forward.");
+            return resultNode;
+        }
+
+        boolean ok = false;
+        Page nextPageFind = null;
+
+        String nextPageType = null;
+
+        for (Map.Entry<Page, String> entry : pagesHistory.entrySet()) {
+            if (currentPage.equals(entry.getKey())) {
+                ok = true;
+            } else {
+                if (ok) {
+                    nextPageFind = entry.getKey();
+                    nextPageType = entry.getValue();
+                    break;
+                }
+            }
+        }
+        currentPage = nextPageFind;
+        currentPageType = nextPageType;
+
+        resultNode.put("message", "The user " + command.getUsername()
+                + " has navigated successfully to the next page.");
+        return resultNode;
+    }
+
+    public ObjectNode previousPage(final Command command) {
+        ObjectNode resultNode = createResultNode(command);
+
+        Page firstPage = pagesHistory.sequencedKeySet().getFirst();
+
+        if (currentPage.equals(firstPage)) {
+            resultNode.put("message", "There are no pages left to go back.");
+            return resultNode;
+        }
+
+        Page previousPageFind = null;
+
+        String previousPageType = null;
+
+        for (Map.Entry<Page, String> entry : pagesHistory.entrySet()) {
+            if (currentPage.equals(entry.getKey())) {
+                break;
+            } else {
+                previousPageFind = entry.getKey();
+                previousPageType = entry.getValue();
+            }
+        }
+        currentPage = previousPageFind;
+        currentPageType = previousPageType;
+
+        resultNode.put("message", "The user " + command.getUsername()
+                + " has navigated successfully to the previous page.");
+        return resultNode;
+    }
+
+    public ObjectNode loadRecommendations(final Command command, final Library library) {
+        ObjectNode resultNode = createResultNode(command);
+        player.calculateStatus(command.getTimestamp());
+
+        checkUserStatus(resultNode);
+        if (userStatus.equals("offline")) {
+            return resultNode;
+        }
+
+        if (homePage.getLastRecommandation() == null) {
+            resultNode.put("message", "No recommendations available.");
+            return resultNode;
+        }
+
+        Artist artist;
+
+        switch (homePage.getLastRecommandation()) {
+            case ("song"):
+                Song lastSong = null;
+                for (Song song : homePage.getRecommandedSongs()) {
+                    lastSong = song;
+                }
+                assert lastSong != null;
+                usersHistory.addSong(lastSong);
+
+                artist = library.findArtist(lastSong.getArtist());
+
+                if (artist != null) {
+                    artist.setHasBeenListenedTo();
+                }
+
+                player.load(lastSong, command.getTimestamp());
+
+                lastSong.increaseListeners();
+                break;
+            case ("playlist"):
+                Playlist lastPlaylist = null;
+                for (Playlist playlist : homePage.getRecommandedPlaylists()) {
+                    lastPlaylist = playlist;
+                }
+
+                assert lastPlaylist != null;
+
+                lastPlaylist.increaseListeners();
+                loadPlaylist(command, resultNode, lastPlaylist);
+                break;
+        }
+        resultNode.put("message", "Playback loaded successfully.");
+        return resultNode;
+    }
+
+    public void buyPremium() {
+        isPremium = true;
+        player.setPremium(true);
+//        if (player.getPlayMode().equals("song")) {
+//            usersHistory.addSongPremium(player.getCurrentSong());
+//        } else if (player.getPlayMode().equals("playlist")) {
+//            usersHistory.addSongPremium(player.getCurrentPlaylist().getSongs().get(player.getSongIndex()));
+//        } else if (player.getPlayMode().equals("album")) {
+//            usersHistory.addSongPremium(player.getCurrentAlbum().getSongs().get(player.getSongIndexAlbum()));
+//        }
+    }
+
+    public void cancelPremium() {
+        isPremium = false;
+        player.setPremium(false);
     }
 
     /**
@@ -923,5 +1226,37 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
 
     public UsersHistory getUsersHistory() {
         return usersHistory;
+    }
+
+    public Page getCurrentPage() {
+        return currentPage;
+    }
+
+    public String getCurrentPageType() {
+        return currentPageType;
+    }
+
+    public ArrayList<String> getSubscribeArtists() {
+        return subscribeArtists;
+    }
+
+    public ArrayList<String> getSubscribeHosts() {
+        return subscribeHosts;
+    }
+
+    public Notifications getNotifications() {
+        return notifications;
+    }
+
+    public ArrayList<String> getBoughtMerch() {
+        return boughtMerch;
+    }
+
+    public HomePage getHomePage() {
+        return homePage;
+    }
+
+    public boolean isPremium() {
+        return isPremium;
     }
 }

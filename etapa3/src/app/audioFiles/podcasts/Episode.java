@@ -1,5 +1,6 @@
 package app.audioFiles.podcasts;
 
+import app.audioFiles.AudioFiles;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -7,26 +8,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Class that represents an episode of a podcast
  * It contains the name, duration and description of the episode
  */
-public class Episode {
-    private final String name;
+public class Episode extends AudioFiles {
     private final Integer duration;
     private final String description;
 
     @JsonCreator
     public Episode(@JsonProperty("name") final String name,
                    @JsonProperty("duration") final Integer duration,
-                   @JsonProperty("description") final String description) {
+                   @JsonProperty("description") final String description,
+                   @JsonProperty("owner") final String owner) {
         this.name = name;
         this.duration = duration;
         this.description = description;
-    }
-
-    /**
-     *
-     * @return the name of the episode
-     */
-    public String getName() {
-        return name;
+        this.owner = owner;
     }
 
     /**

@@ -34,4 +34,12 @@ public abstract class Page {
      * Common method for decreasing the number of listeners
      */
     public abstract void decreaseListeners();
+
+    public ArrayList<Song> getLikedSongs() {
+        return likedSongs;
+    }
+
+    public ArrayList<Playlist> getFollowingPlaylists() {
+        return followingPlaylists;
+    }
 }

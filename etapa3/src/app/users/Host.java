@@ -4,24 +4,33 @@ import app.users.userComponents.publicity.Announcement;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
 import app.userPages.HostPage;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 public class Host {
+    private String name;
     private ArrayList<Podcast> allPodcasts;
     private ArrayList<Podcast> podcasts;
     private ArrayList<Announcement> allAnnouncements;
     private ArrayList<Announcement> announcements;
     private HostPage hostPage;
+    private Integer listeners;
+    private ArrayList<User> listenersList;
 
-    public Host(final ArrayList<Podcast> podcasts, final ArrayList<Announcement> allAnouncements) {
+    public Host(final ArrayList<Podcast> podcasts, final ArrayList<Announcement> allAnouncements,
+                final String username) {
         allPodcasts = podcasts;
         this.podcasts = new ArrayList<>();
         this.allAnnouncements = allAnouncements;
         announcements = new ArrayList<>();
-        hostPage = new HostPage(this.podcasts, this.announcements);
+        hostPage = new HostPage(this.podcasts, this.announcements, username);
+        name = username;
+        listeners = 0;
+        listenersList = new ArrayList<>();
     }
 
     /**
@@ -126,6 +135,14 @@ public class Host {
         return 2;
     }
 
+    public void increaseListeners() {
+        listeners++;
+    }
+
+    public void addListener(final User user) {
+        listenersList.add(user);
+    }
+
     /**
      * Returns the host's host page.
      *
@@ -142,5 +159,17 @@ public class Host {
      */
     public ArrayList<Podcast> getPodcasts() {
         return podcasts;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getListeners() {
+        return listeners;
+    }
+
+    public ArrayList<User> getListenersList() {
+        return listenersList;
     }
 }
