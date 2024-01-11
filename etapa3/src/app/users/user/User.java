@@ -59,7 +59,6 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
     private ArrayList<Host> listenedHosts;
     private ArrayList<Artist> listenedArtists;
     private boolean isPremium;
-//    private Album selectedAlbum;
 
     public User(final String username, final int age, final String city,
                 final ArrayList<Song> songs, final ArrayList<Podcast> podcasts,
@@ -140,15 +139,6 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         isSearch = true;
         lastSearchType = command.getType();
         lastCommandResult = searchBar.search(command, library);
-
-//        if (command.getType().equals("album")) {
-//            int i = 0;
-//            System.out.println(command.getTimestamp());
-//            for (String albumName : lastCommandResult) {
-//                System.out.println(albumName + " by " + searchBar.getAlbumsResult().get(i).getArtist());
-//                i++;
-//            }
-//        }
 
         player.resetPlayer(command.getTimestamp());
 
@@ -311,7 +301,6 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
             return resultNode;
         }
         isSelect = false;
-//        lastCommand = command;
         Artist artist;
 
         switch (lastCommandSearch.getType()) {
@@ -371,9 +360,6 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                 player.load(podcast, command.getTimestamp());
                 break;
             case ("album"):
-//                Album album = library.findAlbum(lastCommandResult.getFirst());
-
-
                 Album album = searchBar.getAlbumsResult().get(lastCommand.getItemNumber() - 1);
                 searchBar.clearAlbumsResult();
 

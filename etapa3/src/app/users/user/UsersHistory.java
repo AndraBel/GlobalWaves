@@ -67,17 +67,6 @@ public class UsersHistory {
         }
     }
 
-    public void displaySongs() {
-        for (Map.Entry<Song, Integer> entry : listenedSongs.entrySet()) {
-            System.out.println(entry.getKey().getName() + " " + entry.getValue());
-            System.out.println(entry.getKey().getArtist());
-            System.out.println(entry.getKey().getGenre());
-            System.out.println(entry.getKey().getAlbum());
-            System.out.println("----------------------------------------");
-            System.out.println();
-        }
-    }
-
     private Album findAlbum(Song song) {
         for (Album album : allAlbums) {
             if (album.getName().equals(song.getAlbum()) && album.getArtist().equals(song.getArtist())) {

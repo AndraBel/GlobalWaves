@@ -260,7 +260,6 @@ public class Player {
                     paused = true;
                     currentSong.decreaseListeners();
 
-                    // daca nextAdBreak == true trebuie sa dau adul
                     if (nextAdBreak) {
                         this.previousMode = "none";
                         nextAdBreak = false;
@@ -1089,7 +1088,7 @@ public class Player {
                 }
 
                 if (!sameGenreSongs.isEmpty()) {
-                    Random random = new Random(playTime); // folosește playTime ca seed
+                    Random random = new Random(playTime);
                     int randomIndex = random.nextInt(sameGenreSongs.size());
                     randomSong = sameGenreSongs.get(randomIndex);
                 }

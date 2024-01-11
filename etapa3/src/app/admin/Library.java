@@ -6,9 +6,12 @@ import app.recommandations.RandomSongRecommendation;
 import app.recommandations.RecommendationContext;
 import app.userPages.ArtistPage;
 import app.userPages.HostPage;
+import app.wrapped.ArtistStrategy;
+import app.wrapped.Context;
+import app.wrapped.HostStrategy;
+import app.wrapped.UserStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fileio.input.EpisodeInput;
 import fileio.input.LibraryInput;
@@ -226,6 +229,12 @@ public final class Library implements GeneralStatistics {
         return null;
     }
 
+    /**
+     * Method for finding an artist in the library
+     *
+     * @param name of the artist
+     * @return the artist if it exists, null otherwise
+     */
     public Artist findArtist(final String name) {
         for (Artist artist : artists.values()) {
             if (artist.getName().equals(name)) {
@@ -235,6 +244,12 @@ public final class Library implements GeneralStatistics {
         return null;
     }
 
+    /**
+     * Method for finding a host in the library
+     *
+     * @param name of the host
+     * @return the host if it exists, null otherwise
+     */
     public Host findHost(final String name) {
         for (Host host : hosts.values()) {
             if (host.getName().equals(name)) {
@@ -254,21 +269,6 @@ public final class Library implements GeneralStatistics {
         for (Podcast podcast : podcasts) {
             if (podcast.getName().equals(name)) {
                 return podcast;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Method for finding an album by name
-     *
-     * @param name of the album
-     * @return the album if it exists, null otherwise
-     */
-    public Album findAlbum(final String name) {
-        for (Album album : allAlbums) {
-            if (album.getName().equals(name)) {
-                return album;
             }
         }
         return null;
@@ -621,8 +621,6 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new album successfully.");
 
-//                notifyUsers(command.getUsername(), "New Album",
-//                        "New Album from " + command.getUsername() + ".");
                 artist.notifyObservers("New Album",
                         "New Album from " + command.getUsername() + ".");
 
@@ -633,14 +631,6 @@ public final class Library implements GeneralStatistics {
             return resultNode;
         }
     }
-
-//    private void notifyUsers(final String username, final String type, final String description) {
-//        for (Map.Entry<String, User> entry : users.entrySet()) {
-//            if (entry.getValue().getSubscribeArtists().contains(username)) {
-//                entry.getValue().getNotifications().addNotification(type, description);
-//            }
-//        }
-//    }
 
     /**
      * Method for removing an album form an artist
@@ -746,8 +736,6 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", newEvent.getOwner()
                         + " has added new event successfully.");
 
-//                notifyUsers(command.getUsername(), "New Event",
-//                        "New Event from " + command.getUsername() + ".");
                 artist.notifyObservers("New Event",
                         "New Event from " + command.getUsername() + ".");
             }
@@ -824,8 +812,6 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new merchandise successfully.");
 
-//                notifyUsers(command.getUsername(), "New Merchandise",
-//                        "New Merchandise from " + command.getUsername() + ".");
                 artist.notifyObservers("New Merchandise",
                         "New Merchandise from " + command.getUsername() + ".");
             }
@@ -834,14 +820,6 @@ public final class Library implements GeneralStatistics {
         }
         return resultNode;
     }
-
-//    private void notifyUsersHosts(final String username, final String type, final String description) {
-//        for (Map.Entry<String, User> entry : users.entrySet()) {
-//            if (entry.getValue().getSubscribeHosts().contains(username)) {
-//                entry.getValue().getNotifications().addNotification(type, description);
-//            }
-//        }
-//    }
 
     /**
      * Method for adding a podcast for a host
@@ -878,8 +856,6 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new podcast successfully.");
 
-//                notifyUsersHosts(command.getUsername(), "New Podcast",
-//                        "New Podcast from " + command.getUsername() + ".");
                 host.notifyObservers("New Podcast",
                         "New Podcast from " + command.getUsername() + ".");
 
@@ -1000,8 +976,6 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has successfully added new announcement.");
 
-//                notifyUsersHosts(command.getUsername(), "New Announcement",
-//                        "New Announcement from " + command.getUsername() + ".");
                 host.notifyObservers("New Announcement",
                         "New Announcement from " + command.getUsername() + ".");
             }
@@ -1047,6 +1021,11 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Method for subscribing or unsubscribing to an artist or host
+     * @param command that is given
+     * @return ObjectNode containing the result, the message
+     */
     public ObjectNode subscribe(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1103,6 +1082,11 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Method for getting the notifications of a user
+     * @param command that is given
+     * @return ObjectNode containing the result, the message
+     */
     public ObjectNode getNotifications(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1119,6 +1103,11 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Method for buying a merch from an artist
+     * @param command that is given
+     * @return ObjectNode containing the result, the message
+     */
     public ObjectNode buyMerch(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1156,6 +1145,12 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Method for displaying the merch bought by a user
+     *
+     * @param command that is given
+     * @return ObjectNode containing the result, the message
+     */
     public ObjectNode seeMerch(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1178,29 +1173,24 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Method for getting the most profitable song of an artist after
+     * the profit of each song
+     *
+     * @param artist the artist
+     * @return String containing the name of the most profitable song
+     */
     public String getMostProfitableSong(final Artist artist) {
         double max = 0;
         String mostProfitableSong = "N/A";
-
-//        for (Map.Entry<String, Album> entry : artist.getAlbums().entrySet()) {
-//            for (Song song : entry.getValue().getSongs()) {
-//                if (song.getRevenue() > max) {
-//                    max = song.getRevenue();
-//                    mostProfitableSong = song.getName();
-//                }
-//            }
-//        }
         List<Song> allSongs = new ArrayList<>();
 
-// Populate the list with songs from all albums
         for (Map.Entry<String, Album> entry : artist.getAlbums().entrySet()) {
             allSongs.addAll(entry.getValue().getSongs());
         }
 
-// Sort the songs lexicographically by their name
         Collections.sort(allSongs, Comparator.comparing(Song::getName));
 
-// Iterate through the sorted list to find the most profitable song
         for (Song song : allSongs) {
             if (song.getRevenue() > max) {
                 max = song.getRevenue();
@@ -1276,295 +1266,18 @@ public final class Library implements GeneralStatistics {
         return context.executeStrategy(command, users, artists, hosts, songs);
     }
 
-    public LinkedHashMap<User, Integer> getTop5Fans(final String artistName, final Integer timestamp) {
-        LinkedHashMap<User, Integer> topFans = new LinkedHashMap<>();
-
-        for (Map.Entry<String, User> entry : users.entrySet()) {
-            entry.getValue().getPlayer().calculateStatus(timestamp);
-            for (Map.Entry<String, Integer> artist : entry.getValue().getUsersHistory().getListenedArtists().entrySet()) {
-                if (artist.getKey().equals(artistName)) {
-                    topFans.put(entry.getValue(), artist.getValue());
-                }
-            }
-        }
-
-        LinkedHashMap<User, Integer> sortedTopFans = topFans.entrySet().stream()
-                .sorted(Map.Entry.<User, Integer>comparingByValue().reversed())
-                .limit(5)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new));
-        return sortedTopFans;
-    }
-
-
     public ObjectNode wrapped(final Command command) {
         ObjectNode resultNode;
+        Context context;
+
         if (artists.containsKey(command.getUsername())) {
-            resultNode = wrappedArtist(command);
+            context = new Context(new ArtistStrategy(artists, users));
         } else if (hosts.containsKey(command.getUsername())) {
-            resultNode = wrappedHost(command);
+            context = new Context(new HostStrategy(hosts));
         } else {
-            resultNode = wrappedUser(command);
+            context = new Context(new UserStrategy(users, artists, hosts));
         }
-        return resultNode;
-    }
-
-    public ObjectNode wrappedUser(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
-
-
-        ObjectNode resultObjectNode = objectMapper.createObjectNode();
-
-        if (artists.containsKey(command.getUsername())) {
-            return resultObjectNode;
-        } else if (hosts.containsKey(command.getUsername())) {
-            return resultObjectNode;
-        }
-
-        if (!users.containsKey(command.getUsername())) {
-            resultObjectNode.put("message", "The username " + command.getUsername()
-                    + " doesn't exist.");
-            return resultObjectNode;
-        }
-
-        User user = users.get(command.getUsername());
-        user.getPlayer().calculateStatus(command.getTimestamp());
-
-
-        ObjectNode resultNodeArtist = objectMapper.createObjectNode();
-
-        if (user.getUsersHistory().getTopArtists(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopGenres(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopSongs(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopAlbums(command.getTimestamp(), false).isEmpty() &&
-                user.getUsersHistory().getTopEpisodes().isEmpty()) {
-
-            resultNode.put("message", "No data to show for user " + command.getUsername() + ".");
-            return resultNode;
-        }
-
-        List<Map.Entry<String, Integer>> topArtist = user.getUsersHistory().getTopArtists(command.getTimestamp());
-        for (Map.Entry<String, Integer> entry : topArtist) {
-            resultNodeArtist.put(entry.getKey(), entry.getValue());
-        }
-
-        resultObjectNode.set("topArtists", resultNodeArtist);
-
-        ObjectNode topGenresArray = objectMapper.createObjectNode();
-
-        List<Map.Entry<String, Integer>> topGenres = user.getUsersHistory().getTopGenres(command.getTimestamp());
-        for (Map.Entry<String, Integer> entry : topGenres) {
-            topGenresArray.put(entry.getKey(), entry.getValue());
-        }
-        resultObjectNode.set("topGenres", topGenresArray);
-
-
-        ObjectNode topSongsArray = objectMapper.createObjectNode();
-
-        List<Map.Entry<String, Integer>> topSongs = user.getUsersHistory().getTopSongs(command.getTimestamp());
-        for (Map.Entry<String, Integer> entry : topSongs) {
-            topSongsArray.put(entry.getKey(), entry.getValue());
-        }
-        resultObjectNode.set("topSongs", topSongsArray);
-
-        ObjectNode topAlbumsArray = objectMapper.createObjectNode();
-
-        List<Map.Entry<Album, Integer>> topAlbums = user.getUsersHistory().getTopAlbums(command.getTimestamp(), false);
-        for (Map.Entry<Album, Integer> entry : topAlbums) {
-            topAlbumsArray.put(entry.getKey().getName(), entry.getValue());
-        }
-        resultObjectNode.set("topAlbums", topAlbumsArray);
-
-
-        ObjectNode topEpisodesArray = objectMapper.createObjectNode();
-
-        List<Map.Entry<Episode, Integer>> topEpisodes = user.getUsersHistory().getTopEpisodes();
-        for (Map.Entry<Episode, Integer> entry : topEpisodes) {
-            topEpisodesArray.put(entry.getKey().getName(), entry.getValue());
-        }
-        resultObjectNode.set("topEpisodes", topEpisodesArray);
-
-        resultNode.set("result", resultObjectNode);
-
-        return resultNode;
-    }
-
-    public static List<Map.Entry<Episode, Integer>> getTop5Episodes(LinkedHashMap<Episode, Integer> hostsEpisodes) {
-        return hostsEpisodes.entrySet()
-                .stream()
-                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
-                .limit(5)
-                .collect(Collectors.toList());
-    }
-
-    public ObjectNode wrappedHost(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
-
-        Host host = hosts.get(command.getUsername());
-
-        ObjectNode resultObjectNode = JsonNodeFactory.instance.objectNode();
-
-        LinkedHashMap<Episode, Integer> hostsEpisodes = new LinkedHashMap<>();
-
-        for (User user : host.getListenersList()) {
-            user.getPlayer().calculateStatus(command.getTimestamp());
-            LinkedHashMap<Episode, Integer> userEpisodes = new LinkedHashMap<>();
-
-            for (Episode episode : user.getUsersHistory().getListenedEpisodes().keySet()) {
-                if (episode.getOwner().equals(host.getName())) {
-                    userEpisodes.put(episode, user.getUsersHistory().getListenedEpisodes().get(episode));
-                }
-            }
-
-            for (Map.Entry<Episode, Integer> entry : userEpisodes.entrySet()) {
-                Episode episode = entry.getKey();
-                Integer count = entry.getValue();
-
-                // If the episode is already in hostsEpisodes, add the count, otherwise put the new count
-                hostsEpisodes.merge(episode, count, Integer::sum);
-            }
-        }
-
-        List<Map.Entry<Episode, Integer>> top5Episodes = getTop5Episodes(hostsEpisodes);
-
-        ObjectNode resultNodeEpisodes = objectMapper.createObjectNode();
-
-        for (Map.Entry<Episode, Integer> entry : top5Episodes) {
-            resultNodeEpisodes.put(entry.getKey().getName(), entry.getValue());
-        }
-
-        resultObjectNode.set("topEpisodes", resultNodeEpisodes);
-        int listeners = host.getListeners();
-
-        resultObjectNode.set("listeners", JsonNodeFactory.instance.numberNode(listeners));
-
-        resultNode.set("result", resultObjectNode);
-
-        return resultNode;
-    }
-
-    public static List<Map.Entry<String, Integer>> getTop5SongsList(LinkedHashMap<String, Integer> artistsSongs) {
-        return artistsSongs.entrySet()
-                .stream()
-                .sorted((entry1, entry2) -> {
-                    int valueComparison = entry2.getValue().compareTo(entry1.getValue());
-                    if (valueComparison == 0) {
-                        return entry1.getKey().compareTo(entry2.getKey());
-                    }
-                    return valueComparison;
-                })
-                .limit(5)
-                .collect(Collectors.toList());
-    }
-
-    public static List<Map.Entry<Album, Integer>> getTop5AlbumsList(LinkedHashMap<Album, Integer> artistsAlbums) {
-        return artistsAlbums.entrySet()
-                .stream()
-                .sorted((entry1, entry2) -> {
-                    int valueComparison = entry2.getValue().compareTo(entry1.getValue());
-                    if (valueComparison == 0) {
-                        return entry1.getKey().getName().compareTo(entry2.getKey().getName());
-                    }
-                    return valueComparison;
-                })
-                .limit(5)
-                .collect(Collectors.toList());
-    }
-
-    private LinkedHashMap<String, Integer> getTopSongs(final Artist artist, final Integer timestamp) {
-        LinkedHashMap<String, Integer> artistsSongs = new LinkedHashMap<>();
-
-        for (User user : artist.getListenersList()) {
-            user.getPlayer().calculateStatus(timestamp);
-            LinkedHashMap<Song, Integer> userSongs = new LinkedHashMap<>();
-
-            for (Song song : user.getUsersHistory().getListenedSongs().keySet()) {
-                if (song.getArtist().equals(artist.getName())) {
-                    userSongs.put(song, user.getUsersHistory().getListenedSongs().get(song));
-                }
-            }
-
-            for (Map.Entry<Song, Integer> entry : userSongs.entrySet()) {
-                Song song = entry.getKey();
-                Integer count = entry.getValue();
-
-                // If the song is already in artistsSongs, add the count, otherwise put the new count
-                artistsSongs.merge(song.getName(), count, Integer::sum);
-            }
-        }
-        return artistsSongs;
-    }
-
-    public ObjectNode wrappedArtist(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
-
-        Artist artist = artists.get(command.getUsername());
-
-        ObjectNode resultObjectNode = JsonNodeFactory.instance.objectNode();
-
-        LinkedHashMap<Album, Integer> artistsAlbums = new LinkedHashMap<>();
-
-        for (User user : artist.getListenersList()) {
-            user.getPlayer().calculateStatus(command.getTimestamp());
-            LinkedHashMap<Album, Integer> userAlbums = new LinkedHashMap<>();
-
-            for (Album album : user.getUsersHistory().getListenedAlbums(true).keySet()) {
-                if (album.getArtist().equals(artist.getName())) {
-                    userAlbums.put(album, user.getUsersHistory().getListenedAlbums(true).get(album));
-                }
-            }
-
-            for (Map.Entry<Album, Integer> entry : userAlbums.entrySet()) {
-                Album album = entry.getKey();
-                Integer count = entry.getValue();
-                artistsAlbums.merge(album, count, Integer::sum);
-            }
-        }
-
-        List<Map.Entry<Album, Integer>> top5Albums = getTop5AlbumsList(artistsAlbums);
-
-
-        ObjectNode resultNodeAlbums = objectMapper.createObjectNode();
-        for (Map.Entry<Album, Integer> entry : top5Albums) {
-            resultNodeAlbums.put(entry.getKey().getName(), entry.getValue());
-        }
-        resultObjectNode.set("topAlbums", resultNodeAlbums);
-
-
-        ObjectNode resultNodeSongs = objectMapper.createObjectNode();
-        LinkedHashMap<String, Integer> artistsSongs = getTopSongs(artist, command.getTimestamp());
-
-        List<Map.Entry<String, Integer>> top5Songs = getTop5SongsList(artistsSongs);
-
-        for (Map.Entry<String, Integer> entry : top5Songs) {
-            resultNodeSongs.put(entry.getKey(), entry.getValue());
-        }
-
-        resultObjectNode.set("topSongs", resultNodeSongs);
-
-        LinkedHashMap<User, Integer> topFans = getTop5Fans(artist.getName(), command.getTimestamp());
-        ArrayNode topFansArrayNode = objectMapper.createArrayNode();
-
-        for (Map.Entry<User, Integer> entry : topFans.entrySet()) {
-            topFansArrayNode.add(entry.getKey().getUsername());
-        }
-
-        resultObjectNode.set("topFans", topFansArrayNode);
-
-        int listeners = artist.getListeners();
-
-        resultObjectNode.set("listeners", JsonNodeFactory.instance.numberNode(listeners));
-
-        resultNode.set("result", resultObjectNode);
-
-        if (top5Albums.isEmpty() && top5Songs.isEmpty() && topFans.isEmpty() && listeners == 0) {
-            resultNode = createResultNode(command);
-            resultNode.put("message", "No data to show for artist " + command.getUsername() + ".");
-            return resultNode;
-        }
+        resultNode = context.wrapped(command);
 
         return resultNode;
     }

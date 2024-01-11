@@ -294,12 +294,6 @@ public final class Main {
             user.getPlayer().calculateStatus(commands.getLast().getTimestamp());
         }
 
-        ObjectNode resultNode = objectMapper.createObjectNode();
-        ObjectNode resultNodeEndProgram = objectMapper.createObjectNode();
-
-//        resultNode.put("command", "endProgram");
-//        resultNode.set("result", resultNodeEndProgram);
-//        outputs.add(resultNode);
         outputs.add(mainLibrary.endProgram());
 
         mainLibrary.resetInstance();

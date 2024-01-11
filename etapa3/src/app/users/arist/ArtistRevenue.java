@@ -14,8 +14,4 @@ public class ArtistRevenue {
     public Artist getArtist() {
         return artist;
     }
-
-    public double getTotalRevenue() {
-        return totalRevenue;
-    }
 }

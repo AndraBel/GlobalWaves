@@ -49,14 +49,6 @@ public class Album extends AudioFilesCollection {
         }
         return true;
     }
-//
-//    public int calculateNumberOfListens() {
-//        int total = 0;
-//        for (Song song : songs) {
-//            total += song.getListenedTo();
-//        }
-//        return total;
-//    }
 
     /**
      * @return the array of songs in the album

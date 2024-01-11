@@ -93,24 +93,6 @@ public class SearchBar {
                     System.out.println("No albums found");
                     break;
                 }
-//                matchFilters(allAlbums, command.getFilters(), result);
-//                ArrayList<Album> resultAlbums = new ArrayList<>();
-//                for (String albumName : result) {
-//                    Album album = library.findAlbum(albumName);
-//                    if (album != null) {
-//                        resultAlbums.add(album);
-//                    }
-//                }
-//
-//                result.clear();
-//                // sort the albums by the order of their artists
-//                for (Artist artist : library.getArtists().values()) {
-//                    for (Album album : resultAlbums) {
-//                        if (album.getArtist().equals(artist.getName())) {
-//                            result.add(album.getName());
-//                        }
-//                    }
-//                }
                 int index = 0;
                 for (Artist artist : library.getArtists().values()) {
                     for (Map.Entry<String, Album> album : artist.getAlbums().entrySet()) {
