@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ArtistPage extends Page implements PageAccept {
+public class ArtistPage extends Page {
     private String name;
     private LinkedHashMap<String, Album> albums;
     private ArrayList<Event> events;

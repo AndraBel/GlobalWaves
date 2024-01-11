@@ -7,7 +7,7 @@ import app.audioFiles.Song;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LikedContentPage extends Page implements PageAccept {
+public class LikedContentPage extends Page {
 
     public LikedContentPage(final ArrayList<Song> likedSongs,
                             final ArrayList<Playlist> followingPlaylists) {

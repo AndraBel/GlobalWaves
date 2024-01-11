@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class HomePage extends Page implements PageAccept {
+public class HomePage extends Page {
     private static final int MAXSIZE = 5;
     private ArrayList<Song> recommandedSongs;
     private ArrayList<Playlist> recommandedPlaylists;

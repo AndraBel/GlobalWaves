@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fileio.input.LibraryInput;
-import app.users.User;
+import app.users.user.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -216,13 +216,7 @@ public final class Main {
                 outputs.add(mainLibrary.seeMerch(command));
                 break;
             case "updateRecommendations":
-                if (command.getRecommendationType().equals("fans_playlist")) {
-                    outputs.add(mainLibrary.fansPlaylist(command));
-                } else if (command.getRecommendationType().equals("random_song")) {
-                    outputs.add(mainLibrary.randomSong(command));
-                } else {
-                    outputs.add(mainLibrary.randomPlaylist(command));
-                }
+                outputs.add(mainLibrary.handleRecommendation(command));
                 break;
             case "previousPage":
                 outputs.add(user.previousPage(command));

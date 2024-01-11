@@ -1,6 +1,9 @@
-package app.users;
+package app.users.arist;
 
 import app.admin.Library;
+import app.users.Subject;
+import app.users.user.Observer;
+import app.users.user.User;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import app.audioFiles.audioCollection.Album;
 import app.audioFiles.Song;
@@ -11,12 +14,9 @@ import app.users.userComponents.publicity.Merch;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 
-public class Artist {
+public class Artist implements Subject {
     private String name;
     private LinkedHashMap<String, Album> albums;
     private ArrayList<Album> allAlbums;
@@ -31,6 +31,8 @@ public class Artist {
     private Integer listeners;
     private ArrayList<User> listenersList;
     private double songRevenue;
+    private List<app.users.user.Observer> observers;
+
 
     public Artist(final ArrayList<Album> allAlbums, final String username) {
         albums = new LinkedHashMap<>();
@@ -43,6 +45,7 @@ public class Artist {
         listeners = 0;
         listenersList = new ArrayList<>();
         songRevenue = 0;
+        observers = new ArrayList<>();
     }
 
     /**
@@ -229,6 +232,26 @@ public class Artist {
             return;
         }
         listenersList.add(user);
+    }
+
+    @Override
+    public void registerObserver(app.users.user.Observer o) {
+        if (observers.contains(o)) {
+            observers.remove(o);
+        }
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(app.users.user.Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(String notification, String description) {
+        for (Observer observer : observers) {
+            observer.update(notification, description);
+        }
     }
 
     /**

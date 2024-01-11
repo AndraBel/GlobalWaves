@@ -8,7 +8,7 @@ import app.users.userComponents.publicity.Announcement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HostPage extends Page implements PageAccept {
+public class HostPage extends Page {
     private String name;
     private ArrayList<Podcast> podcasts;
     private ArrayList<Announcement> announcements;

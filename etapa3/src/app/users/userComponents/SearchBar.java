@@ -5,7 +5,7 @@ import app.audioFiles.AudioFiles;
 import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Podcast;
-import app.users.Artist;
+import app.users.arist.Artist;
 import app.users.Host;
 import app.admin.Command;
 import app.admin.Library;

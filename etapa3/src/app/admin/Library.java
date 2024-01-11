@@ -1,8 +1,11 @@
 package app.admin;
 
+import app.recommandations.FansPlaylistRecommendation;
+import app.recommandations.RandomPlaylistRecommendation;
+import app.recommandations.RandomSongRecommendation;
+import app.recommandations.RecommendationContext;
 import app.userPages.ArtistPage;
 import app.userPages.HostPage;
-import app.userPages.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -17,13 +20,12 @@ import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
-import app.users.Artist;
+import app.users.arist.Artist;
 import app.users.Host;
-import app.users.User;
+import app.users.user.User;
 import app.users.userComponents.publicity.Announcement;
 import app.users.userComponents.publicity.Event;
 import app.users.userComponents.publicity.Merch;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 import java.util.function.Function;
@@ -619,7 +621,9 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new album successfully.");
 
-                notifyUsers(command.getUsername(), "New Album",
+//                notifyUsers(command.getUsername(), "New Album",
+//                        "New Album from " + command.getUsername() + ".");
+                artist.notifyObservers("New Album",
                         "New Album from " + command.getUsername() + ".");
 
                 return resultNode;
@@ -630,13 +634,13 @@ public final class Library implements GeneralStatistics {
         }
     }
 
-    private void notifyUsers(final String username, final String type, final String description) {
-        for (Map.Entry<String, User> entry : users.entrySet()) {
-            if (entry.getValue().getSubscribeArtists().contains(username)) {
-                entry.getValue().getNotifications().addNotification(type, description);
-            }
-        }
-    }
+//    private void notifyUsers(final String username, final String type, final String description) {
+//        for (Map.Entry<String, User> entry : users.entrySet()) {
+//            if (entry.getValue().getSubscribeArtists().contains(username)) {
+//                entry.getValue().getNotifications().addNotification(type, description);
+//            }
+//        }
+//    }
 
     /**
      * Method for removing an album form an artist
@@ -742,7 +746,9 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", newEvent.getOwner()
                         + " has added new event successfully.");
 
-                notifyUsers(command.getUsername(), "New Event",
+//                notifyUsers(command.getUsername(), "New Event",
+//                        "New Event from " + command.getUsername() + ".");
+                artist.notifyObservers("New Event",
                         "New Event from " + command.getUsername() + ".");
             }
         } else {
@@ -818,7 +824,9 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new merchandise successfully.");
 
-                notifyUsers(command.getUsername(), "New Merchandise",
+//                notifyUsers(command.getUsername(), "New Merchandise",
+//                        "New Merchandise from " + command.getUsername() + ".");
+                artist.notifyObservers("New Merchandise",
                         "New Merchandise from " + command.getUsername() + ".");
             }
         } else {
@@ -827,13 +835,13 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
-    private void notifyUsersHosts(final String username, final String type, final String description) {
-        for (Map.Entry<String, User> entry : users.entrySet()) {
-            if (entry.getValue().getSubscribeHosts().contains(username)) {
-                entry.getValue().getNotifications().addNotification(type, description);
-            }
-        }
-    }
+//    private void notifyUsersHosts(final String username, final String type, final String description) {
+//        for (Map.Entry<String, User> entry : users.entrySet()) {
+//            if (entry.getValue().getSubscribeHosts().contains(username)) {
+//                entry.getValue().getNotifications().addNotification(type, description);
+//            }
+//        }
+//    }
 
     /**
      * Method for adding a podcast for a host
@@ -870,7 +878,9 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has added new podcast successfully.");
 
-                notifyUsersHosts(command.getUsername(), "New Podcast",
+//                notifyUsersHosts(command.getUsername(), "New Podcast",
+//                        "New Podcast from " + command.getUsername() + ".");
+                host.notifyObservers("New Podcast",
                         "New Podcast from " + command.getUsername() + ".");
 
                 return resultNode;
@@ -990,7 +1000,9 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has successfully added new announcement.");
 
-                notifyUsersHosts(command.getUsername(), "New Announcement",
+//                notifyUsersHosts(command.getUsername(), "New Announcement",
+//                        "New Announcement from " + command.getUsername() + ".");
+                host.notifyObservers("New Announcement",
                         "New Announcement from " + command.getUsername() + ".");
             }
         } else {
@@ -1059,25 +1071,32 @@ public final class Library implements GeneralStatistics {
             ArtistPage page = (ArtistPage) user.getCurrentPage();
 
             ret = user.subscribeArtist(page.getName());
+            Artist artist = artists.get(page.getName());
 
             if (ret == 0) {
                 resultNode.put("message", command.getUsername() + " unsubscribed from "
                         + page.getName() + " successfully.");
+                artist.removeObserver(user);
             } else {
                 resultNode.put("message", command.getUsername() + " subscribed to "
                         + page.getName() + " successfully.");
+                artist.registerObserver(user);
             }
         } else {
             HostPage hostPage = (HostPage) user.getCurrentPage();
 
             ret = user.subscribeHost(hostPage.getName());
 
+            Host host = hosts.get(hostPage.getName());
+
             if (ret == 0) {
                 resultNode.put("message", command.getUsername() + " unsubscribed from "
                         + hostPage.getName() + " successfully.");
+                host.removeObserver(user);
             } else {
                 resultNode.put("message", command.getUsername() + " subscribed to "
                         + hostPage.getName() + " successfully.");
+                host.registerObserver(user);
             }
         }
 
@@ -1243,30 +1262,18 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
-    public ObjectNode randomSong(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
+    public ObjectNode handleRecommendation(Command command) {
+        RecommendationContext context = new RecommendationContext();
 
-        if (!users.containsKey(command.getUsername())) {
-            resultNode.put("message", "The username " + command.getUsername()
-                    + " doesn't exist.");
-            return resultNode;
-        }
-
-        User user = users.get(command.getUsername());
-
-        Song randomSong = user.getPlayer().randomSong(songs, command.getTimestamp());
-
-        if (randomSong == null) {
-            resultNode.put("message", "No song found.");
-            return resultNode;
+        if (command.getRecommendationType().equals("random_song")) {
+            context.setStrategy(new RandomSongRecommendation());
+        } else if (command.getRecommendationType().equals("fans_playlist")) {
+            context.setStrategy(new FansPlaylistRecommendation(users));
         } else {
-            user.getHomePage().addRecommandedSong(randomSong);
-            user.getHomePage().setLastRecommandation("song");
-            resultNode.put("message", "The recommendations for user " + command.getUsername()
-                    + " have been updated successfully.");
+            context.setStrategy(new RandomPlaylistRecommendation());
         }
 
-        return resultNode;
+        return context.executeStrategy(command, users, artists, hosts, songs);
     }
 
     public LinkedHashMap<User, Integer> getTop5Fans(final String artistName, final Integer timestamp) {
@@ -1292,124 +1299,6 @@ public final class Library implements GeneralStatistics {
         return sortedTopFans;
     }
 
-    public ObjectNode fansPlaylist(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
-
-        if (artists.containsKey(command.getUsername()) || hosts.containsKey(command.getUsername())) {
-            resultNode.put("message", "The username " + command.getUsername()
-                    + " is not a normal user.");
-            return resultNode;
-        }
-
-        if (!users.containsKey(command.getUsername())) {
-            resultNode.put("message", "The username " + command.getUsername()
-                    + " doesn't exist.");
-            return resultNode;
-        }
-
-        User user = users.get(command.getUsername());
-
-        Song currentSong = user.getPlayer().getCurrentSong();
-
-        LinkedHashMap<User, Integer> sortedTop5Fans = getTop5Fans(currentSong.getArtist(), command.getTimestamp());
-
-        Playlist newPlaylist = new Playlist(currentSong.getArtist() + " Fan Club recommendations",
-                command.getUsername());
-
-        for (Map.Entry<User, Integer> entry : sortedTop5Fans.entrySet()) {
-            List<Song> first5LikedSongs = user.getHomePage().getFirst5LikedSongs();
-            for (Song song : first5LikedSongs) {
-                newPlaylist.getSongs().add(song);
-            }
-        }
-
-        user.getPlaylists().add(newPlaylist);
-        user.getHomePage().getRecommandedPlaylists().add(newPlaylist);
-        user.getHomePage().setLastRecommandation("playlist");
-
-        resultNode.put("message", "The recommendations for user " + command.getUsername() +
-                " have been updated successfully.");
-
-        return resultNode;
-    }
-
-    public ObjectNode randomPlaylist(final Command command) {
-        ObjectNode resultNode = createResultNode(command);
-
-        if (!users.containsKey(command.getUsername())) {
-            resultNode.put("message", "The username " + command.getUsername()
-                    + " doesn't exist.");
-            return resultNode;
-        }
-
-        User user = users.get(command.getUsername());
-
-        List<Map.Entry<String, Integer>> top3Genres = user.getTopGenres();
-
-        Playlist newPlaylist = new Playlist(command.getUsername() + "'s recommendations", command.getUsername());
-
-        int index = 1;
-        ArrayList<Song> songs1 = new ArrayList<>();
-        ArrayList<Song> songs2 = new ArrayList<>();
-        ArrayList<Song> songs3 = new ArrayList<>();
-
-        for (Map.Entry<String, Integer> genre : top3Genres) {
-            if (index == 1) {
-                for (Song song : songs) {
-                    if (song.getGenre().equals(genre.getKey()) && !songs1.contains(song)) {
-                        songs1.add(song);
-                    }
-                }
-            } else if (index == 2) {
-                for (Song song : songs) {
-                    if (song.getGenre().equals(genre.getKey()) && !songs2.contains(song)) {
-                        songs2.add(song);
-                    }
-                }
-            } else {
-                for (Song song : songs) {
-                    if (song.getGenre().equals(genre.getKey()) && !songs3.contains(song)) {
-                        songs3.add(song);
-                    }
-                }
-            }
-            index++;
-        }
-
-        songs1 = songs1.stream()
-                .sorted(Comparator.comparingInt(Song::getLikes).reversed())
-                .limit(5)
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        songs2 = songs2.stream()
-                .sorted(Comparator.comparingInt(Song::getLikes).reversed())
-                .limit(3)
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        songs3 = songs3.stream()
-                .sorted(Comparator.comparingInt(Song::getLikes).reversed())
-                .limit(2)
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        for (Song song : songs1) {
-            newPlaylist.getSongs().add(song);
-        }
-        for (Song song : songs2) {
-            newPlaylist.getSongs().add(song);
-        }
-        for (Song song : songs3) {
-            newPlaylist.getSongs().add(song);
-        }
-
-        user.getPlaylists().add(newPlaylist);
-        user.getHomePage().getRecommandedPlaylists().add(newPlaylist);
-        user.getHomePage().setLastRecommandation("playlist");
-
-        resultNode.put("message", "The recommendations for user " + command.getUsername() +
-                " have been updated successfully.");
-
-        return resultNode;
-    }
 
     public ObjectNode wrapped(final Command command) {
         ObjectNode resultNode;

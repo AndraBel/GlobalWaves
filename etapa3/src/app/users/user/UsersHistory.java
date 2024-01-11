@@ -1,4 +1,4 @@
-package app;
+package app.users.user;
 
 import app.audioFiles.AudioFiles;
 import app.audioFiles.Song;

@@ -1,6 +1,6 @@
-package app;
+package app.users.arist;
 
-import app.users.Artist;
+import app.users.arist.Artist;
 
 public class ArtistRevenue {
     private final Artist artist;

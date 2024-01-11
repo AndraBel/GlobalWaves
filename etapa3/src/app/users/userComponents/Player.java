@@ -1,10 +1,10 @@
 package app.users.userComponents;
 
-import app.UsersHistory;
+import app.users.user.UsersHistory;
 import app.admin.Library;
-import app.users.Artist;
+import app.users.arist.Artist;
 import app.users.Host;
-import app.users.User;
+import app.users.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import app.audioFiles.audioCollection.Album;

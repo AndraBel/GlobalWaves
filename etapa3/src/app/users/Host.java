@@ -1,17 +1,15 @@
 package app.users;
 
+import app.users.user.Observer;
+import app.users.user.User;
 import app.users.userComponents.publicity.Announcement;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
 import app.userPages.HostPage;
-import org.checkerframework.checker.units.qual.A;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 
-public class Host {
+public class Host implements Subject {
     private String name;
     private ArrayList<Podcast> allPodcasts;
     private ArrayList<Podcast> podcasts;
@@ -20,6 +18,7 @@ public class Host {
     private HostPage hostPage;
     private Integer listeners;
     private ArrayList<User> listenersList;
+    private List<app.users.user.Observer> observers;
 
     public Host(final ArrayList<Podcast> podcasts, final ArrayList<Announcement> allAnouncements,
                 final String username) {
@@ -31,6 +30,7 @@ public class Host {
         name = username;
         listeners = 0;
         listenersList = new ArrayList<>();
+        observers = new ArrayList<>();
     }
 
     /**
@@ -141,6 +141,23 @@ public class Host {
 
     public void addListener(final User user) {
         listenersList.add(user);
+    }
+
+    @Override
+    public void registerObserver(app.users.user.Observer o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(app.users.user.Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(String notification, String description) {
+        for (Observer observer : observers) {
+            observer.update(notification, description);
+        }
     }
 
     /**

@@ -1,6 +1,5 @@
-package app.users;
+package app.users.user;
 
-import app.UsersHistory;
 import app.admin.Command;
 import app.admin.Library;
 import app.userPages.ArtistPage;
@@ -10,6 +9,8 @@ import app.userPages.LikedContentPage;
 import app.userPages.Page;
 import app.userPages.PagePrinter;
 import app.userPages.PageVisitor;
+import app.users.arist.Artist;
+import app.users.Host;
 import app.users.userComponents.Player;
 import app.users.userComponents.SearchBar;
 import app.users.userComponents.publicity.Notifications;
@@ -27,7 +28,7 @@ import app.audioFiles.podcasts.Podcast;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands {
+public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands, Observer {
     private String username;
     private final int age;
     private final String city;
@@ -1175,18 +1176,18 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
     public void buyPremium() {
         isPremium = true;
         player.setPremium(true);
-//        if (player.getPlayMode().equals("song")) {
-//            usersHistory.addSongPremium(player.getCurrentSong());
-//        } else if (player.getPlayMode().equals("playlist")) {
-//            usersHistory.addSongPremium(player.getCurrentPlaylist().getSongs().get(player.getSongIndex()));
-//        } else if (player.getPlayMode().equals("album")) {
-//            usersHistory.addSongPremium(player.getCurrentAlbum().getSongs().get(player.getSongIndexAlbum()));
-//        }
     }
 
     public void cancelPremium() {
         isPremium = false;
         player.setPremium(false);
+    }
+
+    @Override
+    public void update(String notification, String description) {
+        if (notifications != null) {
+            notifications.update(notification, description);
+        }
     }
 
     /**
