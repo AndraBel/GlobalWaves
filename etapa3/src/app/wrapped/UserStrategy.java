@@ -4,9 +4,8 @@ import app.admin.Command;
 import app.audioFiles.audioCollection.Album;
 import app.audioFiles.podcasts.Episode;
 import app.users.Host;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.user.User;
-import app.wrapped.AllUsersStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -20,8 +19,9 @@ public class UserStrategy implements AllUsersStrategy {
     private LinkedHashMap<String, Artist> artists;
     private LinkedHashMap<String, Host> hosts;
 
-    public UserStrategy(LinkedHashMap<String, User> users, LinkedHashMap<String, Artist> artists,
-                        LinkedHashMap<String, Host> hosts) {
+    public UserStrategy(final LinkedHashMap<String, User> users,
+                        final LinkedHashMap<String, Artist> artists,
+                        final LinkedHashMap<String, Host> hosts) {
         this.users = users;
         this.artists = artists;
         this.hosts = hosts;
@@ -35,8 +35,14 @@ public class UserStrategy implements AllUsersStrategy {
         resultNode.put("timestamp", command.getTimestamp());
         return resultNode;
     }
+
+    /***
+     * Calculate result for wrapped command
+     * @param command
+     * @return objectNode containing the result for wrapped command
+     */
     @Override
-    public ObjectNode wrapped(Command command) {
+    public ObjectNode wrapped(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
 
@@ -60,17 +66,19 @@ public class UserStrategy implements AllUsersStrategy {
 
         ObjectNode resultNodeArtist = objectMapper.createObjectNode();
 
-        if (user.getUsersHistory().getTopArtists(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopGenres(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopSongs(command.getTimestamp()).isEmpty() &&
-                user.getUsersHistory().getTopAlbums(command.getTimestamp(), false).isEmpty() &&
-                user.getUsersHistory().getTopEpisodes().isEmpty()) {
+        if (user.getUsersHistory().getTopArtists(command.getTimestamp()).isEmpty()
+                && user.getUsersHistory().getTopGenres(command.getTimestamp()).isEmpty()
+                && user.getUsersHistory().getTopSongs(command.getTimestamp()).isEmpty()
+                && user.getUsersHistory().getTopAlbums(command.getTimestamp(), false)
+                .isEmpty() && user.getUsersHistory().getTopEpisodes().isEmpty()) {
 
-            resultNode.put("message", "No data to show for user " + command.getUsername() + ".");
+            resultNode.put("message", "No data to show for user "
+                    + command.getUsername() + ".");
             return resultNode;
         }
 
-        List<Map.Entry<String, Integer>> topArtist = user.getUsersHistory().getTopArtists(command.getTimestamp());
+        List<Map.Entry<String, Integer>> topArtist = user.getUsersHistory()
+                .getTopArtists(command.getTimestamp());
         for (Map.Entry<String, Integer> entry : topArtist) {
             resultNodeArtist.put(entry.getKey(), entry.getValue());
         }
@@ -79,7 +87,8 @@ public class UserStrategy implements AllUsersStrategy {
 
         ObjectNode topGenresArray = objectMapper.createObjectNode();
 
-        List<Map.Entry<String, Integer>> topGenres = user.getUsersHistory().getTopGenres(command.getTimestamp());
+        List<Map.Entry<String, Integer>> topGenres = user.getUsersHistory()
+                .getTopGenres(command.getTimestamp());
         for (Map.Entry<String, Integer> entry : topGenres) {
             topGenresArray.put(entry.getKey(), entry.getValue());
         }
@@ -88,7 +97,8 @@ public class UserStrategy implements AllUsersStrategy {
 
         ObjectNode topSongsArray = objectMapper.createObjectNode();
 
-        List<Map.Entry<String, Integer>> topSongs = user.getUsersHistory().getTopSongs(command.getTimestamp());
+        List<Map.Entry<String, Integer>> topSongs = user.getUsersHistory()
+                .getTopSongs(command.getTimestamp());
         for (Map.Entry<String, Integer> entry : topSongs) {
             topSongsArray.put(entry.getKey(), entry.getValue());
         }
@@ -96,7 +106,8 @@ public class UserStrategy implements AllUsersStrategy {
 
         ObjectNode topAlbumsArray = objectMapper.createObjectNode();
 
-        List<Map.Entry<Album, Integer>> topAlbums = user.getUsersHistory().getTopAlbums(command.getTimestamp(), false);
+        List<Map.Entry<Album, Integer>> topAlbums = user.getUsersHistory()
+                .getTopAlbums(command.getTimestamp(), false);
         for (Map.Entry<Album, Integer> entry : topAlbums) {
             topAlbumsArray.put(entry.getKey().getName(), entry.getValue());
         }

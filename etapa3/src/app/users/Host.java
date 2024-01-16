@@ -7,7 +7,10 @@ import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
 import app.userPages.HostPage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class Host implements Subject {
     private String name;
@@ -18,7 +21,7 @@ public class Host implements Subject {
     private HostPage hostPage;
     private Integer listeners;
     private ArrayList<User> listenersList;
-    private List<app.users.user.Observer> observers;
+    private List<Observer> observers;
 
     public Host(final ArrayList<Podcast> podcasts, final ArrayList<Announcement> allAnouncements,
                 final String username) {
@@ -135,30 +138,55 @@ public class Host implements Subject {
         return 2;
     }
 
+    /**
+     * Increments the count of listeners by one.
+     */
     public void increaseListeners() {
         listeners++;
     }
 
+    /**
+     * Adds a user to the list of listeners.
+     *
+     * @param user The User object to be added to the list of listeners.
+     */
     public void addListener(final User user) {
         listenersList.add(user);
     }
 
+    /**
+     * Registers an observer to the list of observers.
+     *
+     * @param o The Observer object to be registered.
+     */
     @Override
-    public void registerObserver(app.users.user.Observer o) {
+    public void registerObserver(final Observer o) {
         observers.add(o);
     }
 
+    /**
+     * Removes an observer from the list of observers.
+     *
+     * @param o The Observer object to be removed.
+     */
     @Override
-    public void removeObserver(app.users.user.Observer o) {
+    public void removeObserver(final Observer o) {
         observers.remove(o);
     }
 
+    /**
+     * Notifies all registered observers with a given notification and description.
+     *
+     * @param notification The notification message to be sent to observers.
+     * @param description  A description accompanying the notification.
+     */
     @Override
-    public void notifyObservers(String notification, String description) {
+    public void notifyObservers(final String notification, final String description) {
         for (Observer observer : observers) {
             observer.update(notification, description);
         }
     }
+
 
     /**
      * Returns the host's host page.
@@ -178,15 +206,31 @@ public class Host implements Subject {
         return podcasts;
     }
 
+    /**
+     * Gets the name of the entity.
+     *
+     * @return String representing the name.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Retrieves the number of listeners.
+     *
+     * @return Integer representing the total number of listeners.
+     */
     public Integer getListeners() {
         return listeners;
     }
 
+    /**
+     * Retrieves the list of users who are listeners.
+     *
+     * @return ArrayList<User> containing the list of listener users.
+     */
     public ArrayList<User> getListenersList() {
         return listenersList;
     }
+
 }

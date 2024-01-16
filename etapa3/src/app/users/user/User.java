@@ -9,7 +9,7 @@ import app.userPages.LikedContentPage;
 import app.userPages.Page;
 import app.userPages.PagePrinter;
 import app.userPages.PageVisitor;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.Host;
 import app.users.userComponents.Player;
 import app.users.userComponents.SearchBar;
@@ -25,7 +25,11 @@ import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Podcast;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands, Observer {
@@ -876,12 +880,6 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         return resultNode;
     }
 
-    private List<String> convertArrayNodeToStringList(final ArrayNode arrayNode) {
-        List<String> stringList = new ArrayList<>();
-        arrayNode.elements().forEachRemaining(element -> stringList.add(element.asText()));
-        return stringList;
-    }
-
     /**
      * This method is used to get the information about the page that the user is currently on.
      *
@@ -950,7 +948,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
 
                 break;
             case ("Artist"):
-                currentPage = player.getCurrentArtist(library).getArtistPage();
+                currentPage = player.getCurrentArtist().getArtistPage();
                 currentPageType = "artist";
                 resultNode.put("message", command.getUsername()
                         + " accessed Artist successfully.");
@@ -958,7 +956,7 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
 
                 break;
             case ("Host"):
-                currentPage = player.getCurrentHost(library).getHostPage();
+                currentPage = player.getCurrentHost().getHostPage();
                 currentPageType = "host";
                 resultNode.put("message", command.getUsername()
                         + " accessed Host successfully.");
@@ -975,6 +973,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         return resultNode;
     }
 
+    /**
+     * Subscribes or unsubscribes to an artist. If the artist is already subscribed,
+     * they are unsubscribed and vice versa.
+     *
+     * @param artist The name of the artist to subscribe or unsubscribe.
+     * @return int Returns 0 if unsubscribed, 1 if subscribed.
+     */
     public int subscribeArtist(final String artist) {
         if (subscribeArtists.contains(artist)) {
             subscribeArtists.remove(artist);
@@ -985,6 +990,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         }
     }
 
+    /**
+     * Subscribes or unsubscribes to a host. If the host is already subscribed,
+     * they are unsubscribed and vice versa.
+     *
+     * @param host The name of the host to subscribe or unsubscribe.
+     * @return int Returns 0 if unsubscribed, 1 if subscribed.
+     */
     public int subscribeHost(final String host) {
         if (subscribeHosts.contains(host)) {
             subscribeHosts.remove(host);
@@ -995,10 +1007,22 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         }
     }
 
+    /**
+     * Adds a merchandise item to the list of bought merchandise.
+     *
+     * @param merchName The name of the merchandise item to be bought.
+     */
     public void buyMerch(final String merchName) {
         boughtMerch.add(merchName);
     }
 
+    /**
+     * Compiles and returns a list of the top genres based on the liked songs
+     * and followed playlists.
+     *
+     * @return List<Map.Entry < String, Integer>> A list of top genres sorted by frequency,
+     * limited to the top 3 genres.
+     */
     public List<Map.Entry<String, Integer>> getTopGenres() {
         LinkedHashMap<String, Integer> genres = new LinkedHashMap<>();
 
@@ -1039,6 +1063,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Navigates to the next page in the user's history, if available.
+     *
+     * @param command The command containing user and navigation details.
+     * @return ObjectNode Result node with a success message or a message indicating no
+     * more pages are available to navigate forward.
+     */
     public ObjectNode nextPage(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1078,6 +1109,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         return resultNode;
     }
 
+    /**
+     * Navigates to the previous page in the user's history, if available.
+     *
+     * @param command The command containing user and navigation details.
+     * @return ObjectNode Result node with a success message or a message indicating no more
+     * pages are available to navigate backward.
+     */
     public ObjectNode previousPage(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1108,6 +1146,13 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         return resultNode;
     }
 
+    /**
+     * Loads the last recommendation for the user and updates their history and player status.
+     *
+     * @param command The Command object containing necessary details like timestamp.
+     * @param library The Library object to find artists and other entities.
+     * @return ObjectNode Result node with status messages and any relevant data.
+     */
     public ObjectNode loadRecommendations(final Command command, final Library library) {
         ObjectNode resultNode = createResultNode(command);
         player.calculateStatus(command.getTimestamp());
@@ -1154,27 +1199,46 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
                 lastPlaylist.increaseListeners();
                 loadPlaylist(command, resultNode, lastPlaylist);
                 break;
+            default:
+                break;
         }
         resultNode.put("message", "Playback loaded successfully.");
         return resultNode;
     }
 
+    /**
+     * Upgrades the user's status to premium.
+     * This method marks the user as a premium user and sets the player's status to premium.
+     */
     public void buyPremium() {
         isPremium = true;
         player.setPremium(true);
     }
 
+    /**
+     * Cancels the user's premium status.
+     * This method reverts the user's status from premium to standard and updates the
+     * player's premium status accordingly.
+     */
     public void cancelPremium() {
         isPremium = false;
         player.setPremium(false);
     }
 
+    /**
+     * Updates the user's notifications.
+     * If the user has a notification handler set, it sends the notification and description to it.
+     *
+     * @param notification The notification message to be sent.
+     * @param description  A description accompanying the notification.
+     */
     @Override
-    public void update(String notification, String description) {
+    public void update(final String notification, final String description) {
         if (notifications != null) {
             notifications.update(notification, description);
         }
     }
+
 
     /**
      * @return The username of the user.
@@ -1211,39 +1275,68 @@ public class User implements SearchBarCommands, PlaylistCommands, PlayerCommands
         return followingPlaylists;
     }
 
+    /**
+     * Gets the user's history.
+     *
+     * @return UsersHistory representing the user's history.
+     */
     public UsersHistory getUsersHistory() {
         return usersHistory;
     }
 
+    /**
+     * Retrieves the current page the user is viewing.
+     *
+     * @return Page representing the current page.
+     */
     public Page getCurrentPage() {
         return currentPage;
     }
 
+    /**
+     * Gets the type of the current page.
+     *
+     * @return String representing the type of the current page.
+     */
     public String getCurrentPageType() {
         return currentPageType;
     }
 
-    public ArrayList<String> getSubscribeArtists() {
-        return subscribeArtists;
-    }
-
-    public ArrayList<String> getSubscribeHosts() {
-        return subscribeHosts;
-    }
-
+    /**
+     * Retrieves the user's notifications.
+     *
+     * @return Notifications containing the user's notifications.
+     */
     public Notifications getNotifications() {
         return notifications;
     }
 
+    /**
+     * Gets the list of merchandise items bought by the user.
+     *
+     * @return ArrayList<String> containing the names of bought merchandise items.
+     */
     public ArrayList<String> getBoughtMerch() {
         return boughtMerch;
     }
 
+    /**
+     * Retrieves the user's home page.
+     *
+     * @return HomePage representing the user's home page.
+     */
     public HomePage getHomePage() {
         return homePage;
     }
 
+    /**
+     * Checks if the user has a premium status.
+     *
+     * @return boolean True if the user is a premium member, false otherwise.
+     */
     public boolean isPremium() {
         return isPremium;
     }
+
+
 }

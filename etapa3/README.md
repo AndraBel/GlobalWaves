@@ -1,5 +1,7 @@
 # <span style="color:Darkorange">Proiect GlobalWaves - Etapa 3 - Analytics & Recommendations
 
+Pentru implementarea acestei etape am folosit implementarea mea de la etapele
+anterioare.
 
 ## <span style="color:Magenta">Main</span>
 In main nu am adaugat mare lucru, doar noile comenzi de la aceasta etapa, iar

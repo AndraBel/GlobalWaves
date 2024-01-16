@@ -3,7 +3,7 @@ package app.recommandations;
 import app.admin.Command;
 import app.audioFiles.Song;
 import app.audioFiles.audioCollection.Playlist;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.Host;
 import app.users.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +22,13 @@ public class RandomPlaylistRecommendation implements RecommendationStrategy {
         objectMapper = new ObjectMapper();
     }
 
+    /**
+     * Creates a result JSON node containing command details.
+     * This method constructs a JSON node with command, user, and timestamp information.
+     *
+     * @param command The Command object containing details to be put in the result node.
+     * @return ObjectNode The created result node with command details.
+     */
     private ObjectNode createResultNode(final Command command) {
         ObjectNode resultNode = objectMapper.createObjectNode();
         resultNode.put("command", command.getCommand());
@@ -29,9 +36,23 @@ public class RandomPlaylistRecommendation implements RecommendationStrategy {
         resultNode.put("timestamp", command.getTimestamp());
         return resultNode;
     }
+
+    /**
+     * Generates a random playlist recommendation based on the user's top genres.
+     *
+     * @param command The Command object containing user and other relevant information.
+     * @param users   Map of all users.
+     * @param artists Map of all artists.
+     * @param hosts   Map of all hosts.
+     * @param songs   ArrayList of all available songs.
+     * @return ObjectNode Result node with the status of the recommendation generation.
+     */
     @Override
-    public ObjectNode generateRecommendation(Command command, Map<String, User> users, Map<String, Artist> artists,
-                                             Map<String, Host> hosts, ArrayList<Song> songs) {
+    public ObjectNode generateRecommendation(final Command command,
+                                             final Map<String, User> users,
+                                             final Map<String, Artist> artists,
+                                             final Map<String, Host> hosts,
+                                             final ArrayList<Song> songs) {
         ObjectNode resultNode = createResultNode(command);
 
         if (!users.containsKey(command.getUsername())) {
@@ -44,7 +65,8 @@ public class RandomPlaylistRecommendation implements RecommendationStrategy {
 
         List<Map.Entry<String, Integer>> top3Genres = user.getTopGenres();
 
-        Playlist newPlaylist = new Playlist(command.getUsername() + "'s recommendations", command.getUsername());
+        Playlist newPlaylist = new Playlist(command.getUsername()
+                + "'s recommendations", command.getUsername());
 
         int index = 1;
         ArrayList<Song> songs1 = new ArrayList<>();
@@ -103,8 +125,8 @@ public class RandomPlaylistRecommendation implements RecommendationStrategy {
         user.getHomePage().getRecommandedPlaylists().add(newPlaylist);
         user.getHomePage().setLastRecommandation("playlist");
 
-        resultNode.put("message", "The recommendations for user " + command.getUsername() +
-                " have been updated successfully.");
+        resultNode.put("message", "The recommendations for user "
+                + command.getUsername() + " have been updated successfully.");
 
         return resultNode;
     }

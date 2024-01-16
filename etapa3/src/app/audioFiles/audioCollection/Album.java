@@ -29,7 +29,8 @@ public class Album extends AudioFilesCollection {
         for (Map.Entry<String, Object> filter : filters.entrySet()) {
             switch (filter.getKey()) {
                 case "name":
-                    if (!name.toLowerCase().startsWith(((String) filter.getValue()).toLowerCase())) {
+                    if (!name.toLowerCase()
+                            .startsWith(((String) filter.getValue()).toLowerCase())) {
                         return false;
                     }
                     break;
@@ -65,12 +66,15 @@ public class Album extends AudioFilesCollection {
     }
 
     /**
-     * @return the the description of the album
+     * @return the description of the album
      */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * @return the owner of the album
+     */
     public String getArtist() {
         return owner;
     }

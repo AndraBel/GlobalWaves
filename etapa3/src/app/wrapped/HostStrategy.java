@@ -16,8 +16,9 @@ import java.util.stream.Collectors;
 public class HostStrategy implements AllUsersStrategy {
     private Map<String, Host> hosts;
     private final ObjectMapper objectMapper;
+    private final static int TOP_FIVE = 5;
 
-    public HostStrategy(Map<String, Host> hosts) {
+    public HostStrategy(final Map<String, Host> hosts) {
         this.hosts = hosts;
         objectMapper = new ObjectMapper();
     }
@@ -30,16 +31,26 @@ public class HostStrategy implements AllUsersStrategy {
         return resultNode;
     }
 
-    public static List<Map.Entry<Episode, Integer>> getTop5Episodes(LinkedHashMap<Episode, Integer> hostsEpisodes) {
+    /**
+     * @param hostsEpisodes LinkedHashMap of episodes and their number of views
+     * @return a list of the top 5 episodes
+     */
+    public static List<Map.Entry<Episode, Integer>>
+    getTop5Episodes(final LinkedHashMap<Episode, Integer> hostsEpisodes) {
         return hostsEpisodes.entrySet()
                 .stream()
                 .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
-                .limit(5)
+                .limit(TOP_FIVE)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Executes the command wrapped for the host
+     * @param command the command to be executed
+     * @return the result of the command
+     */
     @Override
-    public ObjectNode wrapped(Command command) {
+    public ObjectNode wrapped(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
         Host host = hosts.get(command.getUsername());
@@ -54,7 +65,8 @@ public class HostStrategy implements AllUsersStrategy {
 
             for (Episode episode : user.getUsersHistory().getListenedEpisodes().keySet()) {
                 if (episode.getOwner().equals(host.getName())) {
-                    userEpisodes.put(episode, user.getUsersHistory().getListenedEpisodes().get(episode));
+                    userEpisodes.put(episode, user.getUsersHistory()
+                            .getListenedEpisodes().get(episode));
                 }
             }
 
@@ -62,7 +74,8 @@ public class HostStrategy implements AllUsersStrategy {
                 Episode episode = entry.getKey();
                 Integer count = entry.getValue();
 
-                // If the episode is already in hostsEpisodes, add the count, otherwise put the new count
+                /* If the episode is already in hostsEpisodes, add the count,
+                  otherwise put the new count*/
                 hostsEpisodes.merge(episode, count, Integer::sum);
             }
         }

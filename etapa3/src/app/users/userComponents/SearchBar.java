@@ -5,12 +5,14 @@ import app.audioFiles.AudioFiles;
 import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Podcast;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.Host;
 import app.admin.Command;
 import app.admin.Library;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SearchBar {
     private final ArrayList<Song> songs;
@@ -143,11 +145,20 @@ public class SearchBar {
         return result;
     }
 
+    /**
+     * Clears the list of album search results.
+     */
     public void clearAlbumsResult() {
         albumsResult.clear();
     }
 
+    /**
+     * Retrieves the list of album search results.
+     *
+     * @return ArrayList<Album> containing the search result of albums.
+     */
     public ArrayList<Album> getAlbumsResult() {
         return albumsResult;
     }
+
 }

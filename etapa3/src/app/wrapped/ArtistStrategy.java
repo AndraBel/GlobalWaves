@@ -3,9 +3,8 @@ package app.wrapped;
 import app.admin.Command;
 import app.audioFiles.Song;
 import app.audioFiles.audioCollection.Album;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.user.User;
-import app.wrapped.AllUsersStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -21,6 +20,8 @@ public class ArtistStrategy implements AllUsersStrategy {
     private final ObjectMapper objectMapper;
     private LinkedHashMap<String, User> users;
 
+    private static final int TOP_FIVE = 5;
+
     private ObjectNode createResultNode(final Command command) {
         ObjectNode resultNode = objectMapper.createObjectNode();
         resultNode.put("command", command.getCommand());
@@ -29,18 +30,27 @@ public class ArtistStrategy implements AllUsersStrategy {
         return resultNode;
     }
 
-    public ArtistStrategy(Map<String, Artist> artists, LinkedHashMap<String, User> users) {
+    public ArtistStrategy(final Map<String, Artist> artists,
+                          final LinkedHashMap<String, User> users) {
         this.artists = artists;
         objectMapper = new ObjectMapper();
         this.users = users;
     }
 
-    public LinkedHashMap<User, Integer> getTop5Fans(final String artistName, final Integer timestamp) {
+    /***
+     * Method for getting the top 5 fans of an artist
+     * @param artistName
+     * @param timestamp
+     * @return a LinkedHashMap containing the top 5 fans
+     */
+    public LinkedHashMap<User, Integer> getTop5Fans(final String artistName,
+                                                    final Integer timestamp) {
         LinkedHashMap<User, Integer> topFans = new LinkedHashMap<>();
 
         for (Map.Entry<String, User> entry : users.entrySet()) {
             entry.getValue().getPlayer().calculateStatus(timestamp);
-            for (Map.Entry<String, Integer> artist : entry.getValue().getUsersHistory().getListenedArtists().entrySet()) {
+            for (Map.Entry<String, Integer> artist : entry.getValue().getUsersHistory()
+                    .getListenedArtists().entrySet()) {
                 if (artist.getKey().equals(artistName)) {
                     topFans.put(entry.getValue(), artist.getValue());
                 }
@@ -49,7 +59,7 @@ public class ArtistStrategy implements AllUsersStrategy {
 
         LinkedHashMap<User, Integer> sortedTopFans = topFans.entrySet().stream()
                 .sorted(Map.Entry.<User, Integer>comparingByValue().reversed())
-                .limit(5)
+                .limit(TOP_FIVE)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -58,7 +68,8 @@ public class ArtistStrategy implements AllUsersStrategy {
         return sortedTopFans;
     }
 
-    private static List<Map.Entry<String, Integer>> getTop5SongsList(LinkedHashMap<String, Integer> artistsSongs) {
+    private static List<Map.Entry<String, Integer>>
+    getTop5SongsList(final LinkedHashMap<String, Integer> artistsSongs) {
         return artistsSongs.entrySet()
                 .stream()
                 .sorted((entry1, entry2) -> {
@@ -68,11 +79,12 @@ public class ArtistStrategy implements AllUsersStrategy {
                     }
                     return valueComparison;
                 })
-                .limit(5)
+                .limit(TOP_FIVE)
                 .collect(Collectors.toList());
     }
 
-    private static List<Map.Entry<Album, Integer>> getTop5AlbumsList(LinkedHashMap<Album, Integer> artistsAlbums) {
+    private static List<Map.Entry<Album, Integer>>
+    getTop5AlbumsList(final LinkedHashMap<Album, Integer> artistsAlbums) {
         return artistsAlbums.entrySet()
                 .stream()
                 .sorted((entry1, entry2) -> {
@@ -82,11 +94,12 @@ public class ArtistStrategy implements AllUsersStrategy {
                     }
                     return valueComparison;
                 })
-                .limit(5)
+                .limit(TOP_FIVE)
                 .collect(Collectors.toList());
     }
 
-    private LinkedHashMap<String, Integer> getTopSongs(final Artist artist, final Integer timestamp) {
+    private LinkedHashMap<String, Integer> getTopSongs(final Artist artist,
+                                                       final Integer timestamp) {
         LinkedHashMap<String, Integer> artistsSongs = new LinkedHashMap<>();
 
         for (User user : artist.getListenersList()) {
@@ -103,7 +116,8 @@ public class ArtistStrategy implements AllUsersStrategy {
                 Song song = entry.getKey();
                 Integer count = entry.getValue();
 
-                // If the song is already in artistsSongs, add the count, otherwise put the new count
+                /* If the song is already in artistsSongs,
+                   add the count, otherwise put the new count */
                 artistsSongs.merge(song.getName(), count, Integer::sum);
             }
         }
@@ -130,9 +144,11 @@ public class ArtistStrategy implements AllUsersStrategy {
             user.getPlayer().calculateStatus(command.getTimestamp());
             LinkedHashMap<Album, Integer> userAlbums = new LinkedHashMap<>();
 
-            for (Album album : user.getUsersHistory().getListenedAlbums(true).keySet()) {
+            for (Album album : user.getUsersHistory().
+                    getListenedAlbums(true).keySet()) {
                 if (album.getArtist().equals(artist.getName())) {
-                    userAlbums.put(album, user.getUsersHistory().getListenedAlbums(true).get(album));
+                    userAlbums.put(album, user.getUsersHistory()
+                            .getListenedAlbums(true).get(album));
                 }
             }
 
@@ -164,7 +180,8 @@ public class ArtistStrategy implements AllUsersStrategy {
 
         resultObjectNode.set("topSongs", resultNodeSongs);
 
-        LinkedHashMap<User, Integer> topFans = getTop5Fans(artist.getName(), command.getTimestamp());
+        LinkedHashMap<User, Integer> topFans = getTop5Fans(artist.getName(),
+                command.getTimestamp());
         ArrayNode topFansArrayNode = objectMapper.createArrayNode();
 
         for (Map.Entry<User, Integer> entry : topFans.entrySet()) {
@@ -181,7 +198,8 @@ public class ArtistStrategy implements AllUsersStrategy {
 
         if (top5Albums.isEmpty() && top5Songs.isEmpty() && topFans.isEmpty() && listeners == 0) {
             resultNode = createResultNode(command);
-            resultNode.put("message", "No data to show for artist " + command.getUsername() + ".");
+            resultNode.put("message", "No data to show for artist "
+                    + command.getUsername() + ".");
             return resultNode;
         }
 

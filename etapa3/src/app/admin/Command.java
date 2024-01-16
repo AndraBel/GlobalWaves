@@ -274,6 +274,11 @@ public class Command {
         return episodes;
     }
 
+    /**
+     * Retrieves the recommendation type for a user.
+     *
+     * @return A String representing the recommendation type.
+     */
     public String getRecommendationType() {
         return recommendationType;
     }

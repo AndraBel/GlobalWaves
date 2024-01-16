@@ -23,14 +23,19 @@ import app.audioFiles.audioCollection.Playlist;
 import app.audioFiles.Song;
 import app.audioFiles.podcasts.Episode;
 import app.audioFiles.podcasts.Podcast;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.Host;
 import app.users.user.User;
 import app.users.userComponents.publicity.Announcement;
 import app.users.userComponents.publicity.Event;
 import app.users.userComponents.publicity.Merch;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,6 +50,10 @@ public final class Library implements GeneralStatistics {
     private final LinkedHashMap<String, Host> hosts;
     private final ArrayList<Playlist> allPlaylists;
     private static final int MAXSIZE = 5;
+
+    private static final double PREMIUMPRICE = 1000000;
+    private static final double HUNDRED = 100;
+
     private final ObjectMapper objectMapper;
     private ArrayList<Album> allAlbums;
     private ArrayList<Announcement> allAnnouncements;
@@ -807,7 +816,8 @@ public final class Library implements GeneralStatistics {
                 resultNode.put("message", command.getUsername()
                         + " has merchandise with the same name.");
             } else if (result == 1) {
-                resultNode.put("message", "Price for merchandise can not be negative.");
+                resultNode.put("message",
+                        "Price for merchandise can not be negative.");
             } else {
                 resultNode.put("message", command.getUsername()
                         + " has added new merchandise successfully.");
@@ -1023,6 +1033,7 @@ public final class Library implements GeneralStatistics {
 
     /**
      * Method for subscribing or unsubscribing to an artist or host
+     *
      * @param command that is given
      * @return ObjectNode containing the result, the message
      */
@@ -1039,8 +1050,10 @@ public final class Library implements GeneralStatistics {
 
         User user = users.get(command.getUsername());
 
-        if (!user.getCurrentPageType().equals("artist") && !user.getCurrentPageType().equals("host")) {
-            resultNode.put("message", "To subscribe you need to be on the page of an artist or host.");
+        if (!user.getCurrentPageType().equals("artist")
+                && !user.getCurrentPageType().equals("host")) {
+            resultNode.put("message",
+                    "To subscribe you need to be on the page of an artist or host.");
             return resultNode;
         }
 
@@ -1084,6 +1097,7 @@ public final class Library implements GeneralStatistics {
 
     /**
      * Method for getting the notifications of a user
+     *
      * @param command that is given
      * @return ObjectNode containing the result, the message
      */
@@ -1105,6 +1119,7 @@ public final class Library implements GeneralStatistics {
 
     /**
      * Method for buying a merch from an artist
+     *
      * @param command that is given
      * @return ObjectNode containing the result, the message
      */
@@ -1134,13 +1149,15 @@ public final class Library implements GeneralStatistics {
         }
 
         if (price == -1) {
-            resultNode.put("message", "The merch " + command.getName() + " doesn't exist.");
+            resultNode.put("message", "The merch "
+                    + command.getName() + " doesn't exist.");
             return resultNode;
         }
 
         user.buyMerch(command.getName());
         page.increaseMerchRevenue(price);
-        resultNode.put("message", command.getUsername() + " has added new merch successfully.");
+        resultNode.put("message",
+                command.getUsername() + " has added new merch successfully.");
 
         return resultNode;
     }
@@ -1200,6 +1217,11 @@ public final class Library implements GeneralStatistics {
         return mostProfitableSong;
     }
 
+    /**
+     * Method for the end of the program
+     *
+     * @return ObjectNode containing the result, the message
+     */
     public ObjectNode endProgram() {
         ObjectNode resultNode = objectMapper.createObjectNode();
         resultNode.put("command", "endProgram");
@@ -1213,11 +1235,15 @@ public final class Library implements GeneralStatistics {
             }
         }
 
-        // Custom comparator for sorting based on song revenue, then merch revenue, and then lexicographically
+        // Custom comparator for sorting based on song revenue, then merch revenue,
+        // and then lexicographically
         Comparator<Artist> revenueComparator = Comparator
-                .comparing((Artist artist) -> artist.getSongRevenue() == 0 ? 0 : 1, Comparator.reverseOrder())
-                .thenComparing((Artist artist) -> artist.getSongRevenue(), Comparator.reverseOrder())
-                .thenComparing(artist -> artist.getArtistPage().getMerchRevenue(), Comparator.reverseOrder())
+                .comparing((Artist artist) -> artist.getSongRevenue() == 0 ? 0 : 1,
+                        Comparator.reverseOrder())
+                .thenComparing((Artist artist) -> artist.getSongRevenue(),
+                        Comparator.reverseOrder())
+                .thenComparing(artist -> artist.getArtistPage().getMerchRevenue(),
+                        Comparator.reverseOrder())
                 .thenComparing(Artist::getName);
 
         List<Artist> sortedArtists = artists.values().stream()
@@ -1235,7 +1261,7 @@ public final class Library implements GeneralStatistics {
 
                 nodeArray.put("merchRevenue", entry.getArtistPage().getMerchRevenue());
 
-                songRevenue = Math.round(entry.getSongRevenue() * 100.0) / 100.0;
+                songRevenue = Math.round(entry.getSongRevenue() * HUNDRED) / HUNDRED;
                 nodeArray.put("songRevenue", songRevenue);
 
                 nodeArray.put("ranking", rank);
@@ -1252,7 +1278,15 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
-    public ObjectNode handleRecommendation(Command command) {
+    /**
+     * Handles music recommendation based on the type specified in the command.
+     * Three types of recommendation strategies are supported:
+     * 'random_song', 'fans_playlist', and the default 'random_playlist'.
+     *
+     * @param command that is given
+     * @return ObjectNode representing the result of the executed recommendation strategy.
+     */
+    public ObjectNode handleRecommendation(final Command command) {
         RecommendationContext context = new RecommendationContext();
 
         if (command.getRecommendationType().equals("random_song")) {
@@ -1266,6 +1300,12 @@ public final class Library implements GeneralStatistics {
         return context.executeStrategy(command, users, artists, hosts, songs);
     }
 
+    /**
+     * Executes a strategy based on the user's role (artist, host, or user).
+     *
+     * @param command that is given
+     * @return ObjectNode representing the result of the executed strategy.
+     */
     public ObjectNode wrapped(final Command command) {
         ObjectNode resultNode;
         Context context;
@@ -1282,6 +1322,12 @@ public final class Library implements GeneralStatistics {
         return resultNode;
     }
 
+    /**
+     * Processes a request to buy a premium subscription for a user.
+     *
+     * @param command that is given
+     * @return ObjectNode containing a message about the outcome of the premium purchase.
+     */
     public ObjectNode buyPremium(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1297,34 +1343,55 @@ public final class Library implements GeneralStatistics {
         user.getPlayer().calculateStatus(command.getTimestamp());
 
         if (user.isPremium()) {
-            resultNode.put("message", command.getUsername() + " is already a premium user.");
+            resultNode.put("message",
+                    command.getUsername() + " is already a premium user.");
             return resultNode;
         }
 
         user.buyPremium();
-        resultNode.put("message", command.getUsername() + " bought the subscription successfully.");
+        resultNode.put("message",
+                command.getUsername() + " bought the subscription successfully.");
         return resultNode;
     }
 
-    public LinkedHashMap<String, Integer> addArtists(String artist, int nrSongs, LinkedHashMap<String, Integer> artists) {
-        if (artists.containsKey(artist)) {
-            int count = artists.get(artist) + nrSongs;
-            artists.replace(artist, count);
+    /**
+     * Adds an artist to a map with a count of songs, updating the count if the
+     * artist already exists.
+     *
+     * @param artist      Name of the artist.
+     * @param nrSongs     Number of songs to add.
+     * @param artistsCopy The map of artists to update.
+     * @return LinkedHashMap<String, Integer> Updated map of artists with song counts.
+     */
+    public LinkedHashMap<String, Integer> addArtists(final String artist,
+                                                     final int nrSongs,
+                                                     final
+                                                     LinkedHashMap<String, Integer> artistsCopy) {
+        if (artistsCopy.containsKey(artist)) {
+            int count = artistsCopy.get(artist) + nrSongs;
+            artistsCopy.replace(artist, count);
         } else {
-            artists.put(artist, nrSongs);
+            artistsCopy.put(artist, nrSongs);
         }
-        return artists;
+        return artistsCopy;
     }
 
-    public void calculateRevenue(User user) {
+    /**
+     * Calculates the revenue generated by each artist based on the songs
+     * listened to by a premium user.
+     *
+     * @param user The User object for whom the revenue calculation is to be done.
+     */
+    public void calculateRevenue(final User user) {
         LinkedHashMap<String, Integer> listenedArtists = new LinkedHashMap<>();
         double totalListenedSongs = user.getUsersHistory().totalPremiumSongs();
         double listenedSongsArtist = 0;
         double songRevenue = 0;
-        double premiumPrice = 1000000;
+        double premiumPrice = PREMIUMPRICE;
 
 
-        for (Map.Entry<Song, Integer> entry : user.getUsersHistory().getListenedSongsPremium().entrySet()) {
+        for (Map.Entry<Song, Integer> entry : user.getUsersHistory()
+                .getListenedSongsPremium().entrySet()) {
             Artist artist = artists.get(entry.getKey().getArtist());
             listenedArtists = addArtists(artist.getName(), entry.getValue(), listenedArtists);
             double revenuePerSong = (premiumPrice / totalListenedSongs) * entry.getValue();
@@ -1341,6 +1408,12 @@ public final class Library implements GeneralStatistics {
         user.getUsersHistory().deleteListenedSongPremium();
     }
 
+    /**
+     * Processes a request to cancel a premium subscription for a user.
+     *
+     * @param command that is given
+     * @return ObjectNode containing a message about the outcome of the premium cancellation.
+     */
     public ObjectNode cancelPremium(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 
@@ -1355,18 +1428,27 @@ public final class Library implements GeneralStatistics {
         User user = users.get(command.getUsername());
         user.getPlayer().calculateStatus(command.getTimestamp());
         if (!user.isPremium()) {
-            resultNode.put("message", command.getUsername() + " is not a premium user.");
+            resultNode.put("message",
+                    command.getUsername() + " is not a premium user.");
             return resultNode;
         }
 
         user.cancelPremium();
-        resultNode.put("message", command.getUsername() + " cancelled the subscription successfully.");
+        resultNode.put("message",
+                command.getUsername() + " cancelled the subscription successfully.");
 
         calculateRevenue(user);
 
         return resultNode;
     }
 
+    /**
+     * Calculates and distributes revenue to artists based on the number of
+     * songs played during an ad break.
+     *
+     * @param user  The user for whom the ad break revenue is being calculated.
+     * @param price The total revenue generated from the ad break.
+     */
     public void calculateAdBreak(final User user, final Integer price) {
         LinkedHashMap<String, Integer> listenedArtists = new LinkedHashMap<>();
         double totalListenedSongs = user.getPlayer().totalAdBreakSongs();
@@ -1390,6 +1472,13 @@ public final class Library implements GeneralStatistics {
         user.getPlayer().clearSongsAdBreak();
     }
 
+    /**
+     * Initiates an ad break for the specified user's music session.
+     *
+     * @param command that is given
+     * @return ObjectNode containing a message about the successful insertion of the
+     * ad or an error message if the user is not currently playing music.
+     */
     public ObjectNode adBreak(final Command command) {
         ObjectNode resultNode = createResultNode(command);
 

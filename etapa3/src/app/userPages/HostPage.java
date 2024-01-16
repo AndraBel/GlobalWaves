@@ -103,6 +103,11 @@ public class HostPage extends Page {
         return podcasts;
     }
 
+    /**
+     * Gets the name.
+     *
+     * @return String representing the name.
+     */
     public String getName() {
         return name;
     }

@@ -2,7 +2,7 @@ package app.users.userComponents;
 
 import app.users.user.UsersHistory;
 import app.admin.Library;
-import app.users.arist.Artist;
+import app.users.artist.Artist;
 import app.users.Host;
 import app.users.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +15,12 @@ import app.audioFiles.podcasts.Podcast;
 import app.audioFiles.podcasts.PodcastHistory;
 import app.admin.Command;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class Player {
     private Song currentSong;
@@ -47,10 +52,14 @@ public class Player {
     private User user;
     private Integer adPrice;
     private Song adSong;
+    private static final int RANDOMTIME = 30;
 
     private String previousMode;
 
-    public Player(final UsersHistory usersHistory, final boolean isPremium, final Library library, final User user) {
+    public Player(final UsersHistory usersHistory,
+                  final boolean isPremium,
+                  final Library library,
+                  final User user) {
         podcastsHistory = new HashMap<>();
         likedSongs = new ArrayList<>();
         repeat = "no repeat";
@@ -128,7 +137,7 @@ public class Player {
             }
         }
 
-        if(previousMode.equals("none")){
+        if (previousMode.equals("none")) {
             playTime = 0;
         }
         paused = false;
@@ -150,7 +159,7 @@ public class Player {
         resetLoad();
         calculateStatus(loadTimestamp);
 
-        if(song != adSong){
+        if (song != adSong) {
             addSongAdBreak(song);
         }
         nextAdBreak = false;
@@ -243,12 +252,12 @@ public class Player {
         switch (repeat) {
             case ("no repeat"):
                 if (playTime >= currentSong.getDuration()) {
-                    if(currentSong == adSong){
-                        if(previousMode.equals("album")) {
+                    if (currentSong == adSong) {
+                        if (previousMode.equals("album")) {
                             playMode = "album";
                             playTime = playTime - currentSong.getDuration();
                             return;
-                        }else if(previousMode.equals("playlist")) {
+                        } else if (previousMode.equals("playlist")) {
                             playMode = "playlist";
                             playTime = playTime - currentSong.getDuration();
                             return;
@@ -311,12 +320,13 @@ public class Player {
         }
     }
 
-    private <T extends AudioFilesCollection> int calculateSongIndexCollections(final T audioFile,
-                                                                               final T originalFile,
-                                                                               final int index,
-                                                                               final boolean shuffle,
-                                                                               final Integer commandTimestamp,
-                                                                               final String previousMode) {
+    private <T extends AudioFilesCollection> int
+    calculateSongIndexCollections(final T audioFile,
+                                  final T originalFile,
+                                  final int index,
+                                  final boolean shuffle,
+                                  final Integer commandTimestamp,
+                                  final String newPreviousMode) {
         int indexCopy = index;
         boolean shuffleCopy = shuffle;
 
@@ -356,9 +366,9 @@ public class Player {
                 if (nextAdBreak) {
                     nextAdBreak = false;
                     library.calculateAdBreak(user, adPrice);
-                    this.previousMode = previousMode;
+                    this.previousMode = newPreviousMode;
                     load(adSong, commandTimestamp);
-                }else{
+                } else {
                     addSongAdBreak(originalFile.getSongs().get(indexCopy));
                 }
             }
@@ -424,23 +434,23 @@ public class Player {
         }
     }
 
-    private void calculateRepeatCurr(ArrayList<Song> songs, Integer songIndex) {
+    private void calculateRepeatCurr(final ArrayList<Song> songs, final Integer currSongIndex) {
         int count = (int) Math.ceil((double) playTime
-                / songs.get(songIndex).getDuration());
+                / songs.get(currSongIndex).getDuration());
 
         for (int i = 0; i < count; i++) {
-            usersHistory.addSong(songs.get(songIndex));
+            usersHistory.addSong(songs.get(currSongIndex));
         }
 
         if (isPremium) {
             for (int i = 0; i < count; i++) {
-                usersHistory.addSongPremium(songs.get(songIndex));
+                usersHistory.addSongPremium(songs.get(currSongIndex));
             }
         }
 
         playTime = playTime
-                - (playTime / songs.get(songIndex).getDuration())
-                * songs.get(songIndex).getDuration();
+                - (playTime / songs.get(currSongIndex).getDuration())
+                * songs.get(currSongIndex).getDuration();
     }
 
     /**
@@ -506,7 +516,8 @@ public class Player {
                         playTime = playTime - (duration - history.getSecond());
                         history.setLastEpisode(history.getLastEpisode() + 1);
 
-                        usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                        usersHistory.addEpisode(currentPodcast.getEpisodes()
+                                .get(history.getLastEpisode()));
 
                         history.setSecond(0);
                     }
@@ -516,13 +527,15 @@ public class Player {
                 break;
             case ("repeat infinite"):
                 // Repeats the podcast infinitely and calculates the play time
-                duration = currentPodcast.getEpisodes().get(history.getLastEpisode()).getDuration();
+                duration = currentPodcast.getEpisodes()
+                        .get(history.getLastEpisode()).getDuration();
                 while (playTime >= duration - history.getSecond()) {
                     playTime = playTime - (duration - history.getSecond());
                     history.setLastEpisode((history.getLastEpisode() + 1)
                             % currentPodcast.getEpisodes().size());
 
-                    usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                    usersHistory.addEpisode(currentPodcast.getEpisodes()
+                            .get(history.getLastEpisode()));
 
                     if (history.getLastEpisode() == 0) {
                         usersHistory.addPodcast(currentPodcast);
@@ -599,7 +612,8 @@ public class Player {
                                 - playTime - history.getSecond());
                 break;
             case "album":
-                newNode.put("name", currentAlbum.getSongs().get(songIndexAlbum).getName());
+                newNode.put("name", currentAlbum.getSongs()
+                        .get(songIndexAlbum).getName());
                 newNode.put("remainedTime",
                         currentAlbum.getSongs().get(songIndexAlbum).getDuration() - playTime);
                 break;
@@ -614,7 +628,8 @@ public class Player {
         switch (repeat) {
             case "no repeat" -> newNode.put("repeat", "No Repeat");
             case "repeat all" -> newNode.put("repeat", "Repeat All");
-            case "repeat current song" -> newNode.put("repeat", "Repeat Current Song");
+            case "repeat current song" -> newNode.put("repeat",
+                    "Repeat Current Song");
             case "repeat once" -> newNode.put("repeat", "Repeat Once");
             case "repeat infinite" -> newNode.put("repeat", "Repeat Infinite");
             default -> throw new IllegalStateException("Unexpected value: " + repeat);
@@ -836,7 +851,8 @@ public class Player {
                     history.setSecond(0);
                     history.setLastEpisode(history.getLastEpisode() + 1);
 
-                    usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                    usersHistory.addEpisode(currentPodcast.getEpisodes()
+                            .get(history.getLastEpisode()));
 
                     resultNode.put("message",
                             "Skipped to next track successfully. The current track is "
@@ -853,7 +869,8 @@ public class Player {
                 } else {
                     history.setSecond(0);
                     history.setLastEpisode(history.getLastEpisode() + 1);
-                    usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                    usersHistory.addEpisode(currentPodcast.getEpisodes()
+                            .get(history.getLastEpisode()));
                 }
                 resultNode.put("message",
                         "Skipped to next track successfully. The current track is "
@@ -865,7 +882,8 @@ public class Player {
                 history.setLastEpisode((history.getLastEpisode() + 1)
                         % currentPodcast.getEpisodes().size());
 
-                usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                usersHistory.addEpisode(currentPodcast.getEpisodes()
+                        .get(history.getLastEpisode()));
 
                 history.setSecond(0);
                 resultNode.put("message",
@@ -935,7 +953,8 @@ public class Player {
                 if (history.getLastEpisode() != 0 && history.getSecond() + playTime == 0) {
                     history.setLastEpisode(history.getLastEpisode() - 1);
 
-                    usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                    usersHistory.addEpisode(currentPodcast.getEpisodes()
+                            .get(history.getLastEpisode()));
                 }
                 history.setSecond(0);
                 resultNode.put("message",
@@ -979,7 +998,8 @@ public class Player {
                     != currentPodcast.getEpisodes().size() - 1) {
                 history.setLastEpisode(history.getLastEpisode() + 1);
 
-                usersHistory.addEpisode(currentPodcast.getEpisodes().get(history.getLastEpisode()));
+                usersHistory.addEpisode(currentPodcast.getEpisodes()
+                        .get(history.getLastEpisode()));
 
                 history.setSecond(0);
                 playTime = 0;
@@ -1070,14 +1090,21 @@ public class Player {
         }
     }
 
-    public Song randomSong(ArrayList<Song> allSongs, Integer commandTimestamp) {
+    /**
+     * Selects a random song from a list of songs based on the current play mode and time.
+     *
+     * @param allSongs         List of all available songs.
+     * @param commandTimestamp Timestamp of the current command, used for randomization.
+     * @return Song A randomly selected song or null if conditions are not met.
+     */
+    public Song randomSong(final ArrayList<Song> allSongs, final Integer commandTimestamp) {
         calculateStatus(commandTimestamp);
 
         String genre = null;
         Song randomSong = null;
 
         if (playMode.equals("song")) {
-            if (playTime >= 30) {
+            if (playTime >= RANDOMTIME) {
                 genre = currentSong.getGenre();
                 ArrayList<Song> sameGenreSongs = new ArrayList<>();
 
@@ -1097,7 +1124,12 @@ public class Player {
         return randomSong;
     }
 
-    public Artist getCurrentArtist(Library library) {
+    /**
+     * Retrieves the current artist based on the play mode.
+     *
+     * @return Artist The current artist or null if not applicable.
+     */
+    public Artist getCurrentArtist() {
         switch (playMode) {
             case "song" -> {
                 String artistName = currentSong.getArtist();
@@ -1117,7 +1149,12 @@ public class Player {
         }
     }
 
-    public Host getCurrentHost(Library library) {
+    /**
+     * Retrieves the current host if the play mode is set to 'podcast'.
+     *
+     * @return Host The host of the current podcast or null if play mode is not 'podcast'.
+     */
+    public Host getCurrentHost() {
         if (playMode.equals("podcast")) {
             String hostName = currentPodcast.getOwner();
             return library.findHost(hostName);
@@ -1125,7 +1162,13 @@ public class Player {
         return null;
     }
 
-    private void addSongAdBreak(Song song) {
+    /**
+     * Adds a song to the ad break count map, incrementing the count if the song already exists.
+     * This method is used to keep track of how many times a song has been played during ad breaks.
+     *
+     * @param song The song to add or increment in the ad break map.
+     */
+    private void addSongAdBreak(final Song song) {
         if (songsAdBreak.containsKey(song)) {
             // If the song is already in the map, increment the count
             int count = songsAdBreak.get(song);
@@ -1135,14 +1178,29 @@ public class Player {
         }
     }
 
+
+    /**
+     * Sets the flag for an upcoming ad break.
+     * This method indicates that an ad break is to be expected next in the playback.
+     */
     public void setAdBreak() {
         nextAdBreak = true;
     }
 
+    /**
+     * Clears the list of songs played during ad breaks.
+     * This method is used to reset the count of songs played during ad breaks.
+     */
     public void clearSongsAdBreak() {
         songsAdBreak.clear();
     }
 
+    /**
+     * Calculates the total number of songs played during ad breaks.
+     * This method sums up all the individual song counts in the ad break song map.
+     *
+     * @return Integer Total number of songs played during ad breaks.
+     */
     public Integer totalAdBreakSongs() {
         Integer total = 0;
         for (Map.Entry<Song, Integer> entry : songsAdBreak.entrySet()) {
@@ -1151,6 +1209,11 @@ public class Player {
         return total;
     }
 
+    /**
+     * Retrieves the map of songs played during ad breaks along with their counts.
+     *
+     * @return LinkedHashMap<Song, Integer> Map of songs and their play counts during ad breaks.
+     */
     public LinkedHashMap<Song, Integer> getSongsAdBreak() {
         return songsAdBreak;
     }
@@ -1252,11 +1315,22 @@ public class Player {
         return songIndexAlbum;
     }
 
-    public void setPremium(boolean premium) {
+    /**
+     * Sets the premium status of a user or entity.
+     *
+     * @param premium A boolean value representing the premium status to be set.
+     */
+    public void setPremium(final boolean premium) {
         isPremium = premium;
     }
 
-    public void setAdPrice(Integer adPrice) {
+    /**
+     * Sets the price for an advertisement.
+     *
+     * @param adPrice The price of the advertisement to be set as an Integer.
+     */
+    public void setAdPrice(final Integer adPrice) {
         this.adPrice = adPrice;
     }
+
 }

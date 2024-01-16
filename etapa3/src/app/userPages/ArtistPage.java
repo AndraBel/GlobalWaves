@@ -89,25 +89,47 @@ public class ArtistPage extends Page {
         listeners--;
     }
 
+    /**
+     * Increases the merchandise revenue by a specified amount.
+     *
+     * @param price The amount by which the merchandise revenue should be increased.
+     */
     public void increaseMerchRevenue(final double price) {
         merchRevenue += price;
     }
 
     /**
-     * @return the number of listeners
+     * Retrieves the number of listeners.
+     *
+     * @return Integer representing the number of listeners.
      */
     public Integer getListeners() {
         return listeners;
     }
 
+    /**
+     * Gets the name.
+     *
+     * @return String representing the name.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Retrieves the list of merchandise.
+     *
+     * @return ArrayList<Merch> containing the list of merchandise items.
+     */
     public ArrayList<Merch> getMerch() {
         return merch;
     }
 
+    /**
+     * Gets the total merchandise revenue.
+     *
+     * @return double representing the total merchandise revenue.
+     */
     public double getMerchRevenue() {
         return merchRevenue;
     }

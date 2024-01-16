@@ -65,6 +65,7 @@ public class HomePage extends Page {
 
     /**
      * Updates the resultNode with the content of the page
+     *
      * @param resultNode The node to be updated with the content
      */
     @Override
@@ -73,22 +74,27 @@ public class HomePage extends Page {
 
         List<String> followingPlaylistNames = this.getFirst5FollowingPlaylistNames();
 
-        List<String> recommandedSongs = this.recommandedSongs.stream()
+        List<String> orderedRecommandedSongs = recommandedSongs.stream()
                 .sorted(Comparator.comparingInt(Song::getLikes).reversed())
                 .limit(MAXSIZE)
                 .map(Song::getName)
                 .collect(Collectors.toList());
 
-        List<String> recommandedPlaylists = this.recommandedPlaylists.stream().limit(MAXSIZE)
+        List<String> orderedRecommandedPlaylists = recommandedPlaylists.stream().limit(MAXSIZE)
                 .map(Playlist::getName)
                 .collect(Collectors.toList());
 
         resultNode.put("message", "Liked songs:\n\t" + likedSongNames
                 + "\n\nFollowed playlists:\n\t"
-                + followingPlaylistNames + "\n\nSong recommendations:\n\t" + recommandedSongs
-                + "\n\nPlaylists recommendations:\n\t" + recommandedPlaylists);
+                + followingPlaylistNames + "\n\nSong recommendations:\n\t" + orderedRecommandedSongs
+                + "\n\nPlaylists recommendations:\n\t" + orderedRecommandedPlaylists);
     }
 
+    /**
+     * Sets the last recommendation.
+     *
+     * @param lastRecommendation A String representing the latest recommendation to be set.
+     */
     public void setLastRecommandation(final String lastRecommandation) {
         this.lastRecommandation = lastRecommandation;
     }
@@ -101,18 +107,38 @@ public class HomePage extends Page {
         // Do nothing
     }
 
+    /**
+     * Adds a song to the list of recommended songs.
+     *
+     * @param song The Song object to be added to the list of recommended songs.
+     */
     public void addRecommandedSong(final Song song) {
         recommandedSongs.add(song);
     }
 
+    /**
+     * Retrieves the list of recommended playlists.
+     *
+     * @return ArrayList<Playlist> containing the list of recommended playlists.
+     */
     public ArrayList<Playlist> getRecommandedPlaylists() {
         return recommandedPlaylists;
     }
 
+    /**
+     * Retrieves the list of recommended songs.
+     *
+     * @return ArrayList<Song> containing the list of recommended songs.
+     */
     public ArrayList<Song> getRecommandedSongs() {
         return recommandedSongs;
     }
 
+    /**
+     * Retrieves the last recommendation made.
+     *
+     * @return String representing the last recommendation.
+     */
     public String getLastRecommandation() {
         return lastRecommandation;
     }

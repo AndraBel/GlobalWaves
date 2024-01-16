@@ -35,11 +35,22 @@ public abstract class Page {
      */
     public abstract void decreaseListeners();
 
+    /**
+     * Retrieves the list of songs that the user has liked.
+     *
+     * @return ArrayList<Song> containing the list of liked songs.
+     */
     public ArrayList<Song> getLikedSongs() {
         return likedSongs;
     }
 
+    /**
+     * Retrieves the list of playlists that the user is following.
+     *
+     * @return ArrayList<Playlist> containing the list of following playlists.
+     */
     public ArrayList<Playlist> getFollowingPlaylists() {
         return followingPlaylists;
     }
+
 }
