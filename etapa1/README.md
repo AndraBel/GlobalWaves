@@ -1,61 +1,64 @@
-# <span style="color:Darkorange">Proiect GlobalWaves  - Etapa 1
+<span style="color:Darkorange">GlobalWaves Project - Stage 1
+<span style="color:Magenta">Main</span>
+I created the Command class, which contains all possible fields of
+commands, and the fields that remain empty will be null due to
+JsonIgnoreProperties. Therefore, in commands, I will have all the
+commands read from the tests.
 
+<span style="color:Magenta">Library</span>
+The Library implements the GeneralStatistics interface, which contains
+the relevant methods. In this class, I kept all the songs read from the
+library in a Songs array, similarly for podcasts, and in the users
+hashmap, I have all the users, with their name as the key. allPlaylists
+will initially be an empty array, which will be created gradually by each
+user. Here, I also have the getTop5 methods, which use a generic sorting
+method.
 
-## <span style="color:Magenta">Main</span>
-   Am facut clasa Command care contine toate campurile posibile ale comenzilor, 
-iar campurile care raman goale o sa fie null datorita JsonIgnoreProperties,
-asadar in commands o sa am toate comenzile citite din teste.
+<span style="color:Magenta">User</span>
+In this class, I implemented most of the logic. First of all, it implements
+the PlayerCommand, PlaylistCommand, and SearchBarCommand interfaces.
+Therefore, each user has a search bar, implemented in the SearchBar class,
+which contains two specific functions: search and select. In the first
+function, with the help of the generic matchFilters method, I search
+through the user's songs, podcasts, and playlists, as well as through all
+the existing playlists, for the first 5 results that match the filters.
+The three classes, Podcast, Playlist, and Song, inherit from the
+AudioFiles class, which has the matchFilters method implemented for
+both podcasts and playlists, but which Song overrides.
 
-## <span style="color:Magenta">Library</span>
-Library implementeaza interfata GeneralStatistics ce contine metodele aferente.
-In aceasta clasa am pastrat in arrayul de Songs toate melodiile citite din
-library, in podcasts la fel si in hashmapul users am toti utilizatorii, cheia
-fiind numele lor, iar allPlaylists va fi initial un array gol, care va fi
-creat pe parcurs de fiecare user. Aici mai am si metodele de getTop5 care se
-folosesc de o metoda generica de sortare.
+In the Playlist class, I also have methods for the follow command,
+which helps me keep a counter for the number of followers of the current
+playlist, and the same goes for the Song class for the number of likes
+received from users. In the Player class, I designed all the logic for
+the player and implemented all its specific functions. In the
+calculateStatus methods, which predominate in this class, I calculate
+the status of the current audio file being played, depending on repeat.
+Thus, I update the player's status at the beginning of each method in this
+class and also update the lastCommandTimestamp, which I keep track of in
+the calculate method. I chose all the members of this class to easily
+calculate the player's status at any moment, and I use this also for
+podcasts with the PodcastHistory class, where I store the episode and
+the second where it left off. Another important method in Player is
+next, which, depending on repeat and playMode, which represents what
+is currently being played, either moves to the next file, repeats the
+current file, repeats infinitely, or stops altogether.
 
-## <span style="color:Magenta">User
-In aceasta clasa am facut cam toata logica. In primul rand acesta implementeaza
-interfetele PlayerCommand, PlaylistCommand si SearchBarCommand. Asadar, fiecare
-user are un Search Bar, implementat in clasa <span style="color:pink">SearchBar
-</span>, care detine cele doua functii specifice: search si select. In prima
-functie, cu ajutorul metodei generice matchFilters, caut in melodii, podcasturi
-si playlisturile utilizatorului, respectiv in toate playlisturile existente,
-primele 5 rezultate care se potrivesc filtrelor. Cele trei clase, Podcast, 
-Playlist si Song mostenesc clasa AudioFiles care are implementata metoda de
-MatchFilters comuna pentru Podcast si playlist, dar pe care Song o suprascrie.
+Additionally, all the methods such as load, playPause, repeat, etc.,
+are implemented in the User class according to the requirements, each
+with its corresponding error messages.
 
-In playlist mai am si metodele pentru comanda follow care ma ajuta sa tin un
-contor pentru numarul de urmaritori ai playlistului curent si acelasi lucru in
-clasa Song pentru numarul de likeuri primite de la utilizatori.
-In clasa <span style="color:pink">Player</span>, am gandit toata logica pentru
-player si am implementat toate functiile specifice acestuia. In metodele de
-calculate status, care predomina in aceasta clasa am calculat in functie de
-repeat, pentru fisierul audio curent care ruleaza starea in care acesta afla.
-Astfel actualizez statusul playerului la inceputul fiecarei metode din aceasta
-clasa si actualizez de asemenea si lastCommandTimestamp de care tin cont in
-metoda de calculate. Am ales toti membri din aceasta clasa pentru a-mi fi usor
-sa calculez starea in care se afla playerul in orice moment, de asta ma
-folosesc la podcast si de clasa PodcastHistory in care retin episodul si
-secunda la care a ramas. O alta metoda importanta din Player este next, care
-de asemenea, in functie de reapeat si de playmode, care reprezinta ce se
-ruleaza in momentul curent, trece mai departe, repeta fisierul curent, se
-repeta la infinit sau se opreste de tot.
+<span style="color:Aquamarine">User</span> implements:
+SearchBarCommands
+PlayerCommands
+PlaylistCommands
 
-De asemenea, toate metodele de load, playPause, repeat etc. sunt implementate
-in  clasa User conform cerintelor, fiecare avand mesajele de eroare aferente.
+<span style="color:Aquamarine">Library</span> implements:
+GeneralStatistics
 
-### <span style="color:Aquamarine">User </span> implements:
-    > SearchBarCommands
-    > PlayerCommands
-    > PlaylistCommands
-### <span style="color:Aquamarine">Library </span> implements:
-    > GeneralStatistics
-### <span style="color:Aquamarine">Song,Playlist,Podcast </span> extend:
-    > AudioFiles
+<span style="color:Aquamarine">Song, Playlist, Podcast</span> extend:
+AudioFiles
 
-## <span style="color:Darkorange">GeneralFeedback
-A fost o tema foarte interesanta, care chiar mi-a pus rabdarea la incercare, am
-trecut prin multe stari de la frustrare la bucurie, dar intr-un final am reusit
-cu greu sa o termin. Mi s-a parut cam lunga si am avut multe de implementat
-pentru o prima tema dar a fost o experienta interesanta.
+<span style="color:Darkorange">General Feedback</span>
+This was a very interesting project that really tested my patience. I went
+through many states, from frustration to joy, but in the end, I managed to
+finish it.
