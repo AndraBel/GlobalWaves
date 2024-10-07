@@ -1,11 +1,14 @@
-<span style="color:Darkorange">GlobalWaves Project - Stage 1
-<span style="color:Magenta">Main</span>
+# <span style="color:Darkorange">Proiect GlobalWaves - Etapa 1
+
+## <span style="color:Magenta">Main</span>
+
 I created the Command class, which contains all possible fields of
 commands, and the fields that remain empty will be null due to
 JsonIgnoreProperties. Therefore, in commands, I will have all the
 commands read from the tests.
 
-<span style="color:Magenta">Library</span>
+## <span style="color:Magenta">Library</span>
+
 The Library implements the GeneralStatistics interface, which contains
 the relevant methods. In this class, I kept all the songs read from the
 library in a Songs array, similarly for podcasts, and in the users
@@ -14,7 +17,8 @@ will initially be an empty array, which will be created gradually by each
 user. Here, I also have the getTop5 methods, which use a generic sorting
 method.
 
-<span style="color:Magenta">User</span>
+## <span style="color:Magenta">User</span>
+
 In this class, I implemented most of the logic. First of all, it implements
 the PlayerCommand, PlaylistCommand, and SearchBarCommand interfaces.
 Therefore, each user has a search bar, implemented in the SearchBar class,
@@ -47,18 +51,22 @@ Additionally, all the methods such as load, playPause, repeat, etc.,
 are implemented in the User class according to the requirements, each
 with its corresponding error messages.
 
-<span style="color:Aquamarine">User</span> implements:
-SearchBarCommands
-PlayerCommands
-PlaylistCommands
+### <span style="color:Aquamarine">User </span> implements:
 
-<span style="color:Aquamarine">Library</span> implements:
-GeneralStatistics
+    > SearchBarCommands
+    > PlayerCommands
+    > PlaylistCommands
 
-<span style="color:Aquamarine">Song, Playlist, Podcast</span> extend:
-AudioFiles
+### <span style="color:Aquamarine">Library </span> implements:
 
-<span style="color:Darkorange">General Feedback</span>
+    > GeneralStatistics
+
+### <span style="color:Aquamarine">Song,Playlist,Podcast </span> extend:
+
+    > AudioFiles
+
+## <span style="color:Darkorange">GeneralFeedback
+
 This was a very interesting project that really tested my patience. I went
 through many states, from frustration to joy, but in the end, I managed to
 finish it.
