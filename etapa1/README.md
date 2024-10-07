@@ -1,4 +1,4 @@
-# <span style="color:Darkorange">Proiect GlobalWaves - Etapa 1
+# <span style="color:Darkorange">GlobalWaves Project - Part one
 
 ## <span style="color:Magenta">Main</span>
 
