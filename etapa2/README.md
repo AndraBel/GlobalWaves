@@ -1,81 +1,98 @@
-# <span style="color:Darkorange">Proiect GlobalWaves - Etapa 2 - Pagination</span>
+# <span style="color:Darkorange">GlobalWaves Project - Stage 2 - Pagination
 
 ## <span style="color:Magenta">Main</span>
-In plus fata de prima etapa am adaugat in metoda handleCommand si noile comenzi,
-iar pentru fiecare comanda am verificat, inainte de a o apela, daca utilizatorul
-pentru care se va efectua comanda exista, exceptand comenzile generale, pentru
-care utilizatorul nu este specificat. De asemenea, am folosit design pattern-ul
-Singleton pentru a avea o singura instanta a clasei Library, iar dupa fiecare
-test setez instanta la null pentru a nu avea datele de la testul anterior.
+
+In addition to the first stage, I added the new commands to the handleCommand
+method, and for each command, I checked, before calling it, if the user for
+whom the command is being executed exists, except for general commands, where
+the user is not specified. I also used the Singleton design pattern to ensure
+there is only one instance of the Library class, and after each test, I reset
+the instance to null to avoid having data from the previous test.
 
 ## <span style="color:Magenta">Library</span>
-Am adaugat majoritatea comenzilor noi in aceasta clasa. Am 3 hashmapuri in care
-tin utilizatorii normali, artistii si hoastii, iar cheia este numele acestora.
-O parte mai complexa mi s-a parut stergereau unui utilizator, pentru ca a
-trebuit verificat daca se afla cineva pe pagina lui, pentru artist si host,
-daca cineva ii asculta albumul sau orice melodie din album pentru artist, daca
-asculta cineva vreun podcast la host, iar la user normal daca ii asculta cineva
-playlistul sau orice melodie din playlist. In urma acestor verificari am sters
-si fisierele audio din liste, si am verificat daca exista vreun user care le-a
-dat like sau follow pentru a-l retrage. De asemenea, am retras si din partea 
-utilizatorului sters likeurile sau followurile date altor melodii/playlisturi.
-In rest, pentru fiecare tipuri de utilizator am adaugat/sters/afisat conform
-comenzii anunturi, evenimente, merchuri, albume si asa mai departe.
+
+I added most of the new commands in this class. I have 3 hashmaps where I store
+regular users, artists, and hosts, with their names as the key. Deleting a user
+was a bit more complex because I had to check if someone was on their page. For
+an artist or host, I checked if someone was listening to their album or any
+song from the album (for the artist), or if someone was listening to a podcast
+(for the host). For a regular user, I checked if anyone was listening to their
+playlist or any song in it. After these checks, I deleted the audio files from
+the lists and verified if any user had liked or followed them, retracting these
+accordingly. I also removed the likes or follows given by the deleted user to
+other songs or playlists. For each user type, I added/removed/displayed
+announcements, events, merchandise, albums, and so on, according to the command.
 
 ## <span style="color:Magenta">Page</span>
-In pachetul userPages exista cele 4 tipuri de pagini pe care se poate afla un
-utilizator normal. Toate acestea extind clasa abstracta Page si implementeaza 
-interfata PageAccept folosita pentru a implementa design pattern-ul Visitor.
-In clasa PagePrinter care implementeaza interfata PageVisitor, sunt implementate
-metodele de vizitare pentru fiecare tip de pagina, care vor fi folosite atunci
-cand un user normal vrea sa afiseze pagina pe care se afla. Fiecare pagina are
-un numar de ascultatori salvat care creste si scade in functie de cine este 
-pe pagina respectiva, la fel am facut si pentru fisierele audio care au un 
-contor pentru numarul de ascultatori.
 
-## <span style="color:Magenta">User
-In aceasta clasa am adaugat metodele specifice unui user normal si o referinta
-la toate albumele existente trimisa in SearchBar pentru a putea efectua cautarea
-pe albume.
+In the userPages package, there are 4 types of pages that a regular user
+can be on. All of them extend the abstract class Page and implement the
+PageAccept interface, which is used to implement the Visitor design pattern.
+In the PagePrinter class, which implements the PageVisitor interface, I
+implemented the visiting methods for each page type, which are used when a
+regular user wants to display the page they are on. Each page has a listener
+counter that increases or decreases depending on who is on the respective page,
+and I did the same for audio files, which have a listener counter.
 
-## <span style="color:Magenta">Player
-In PLayer am facut comenzile specifice unui playlist si pentru albume care se
-comporta aproximativ la fel.
+## <span style="color:Magenta">User</span>
 
-## <span style="color:Magenta">Publicity
-Clase Announcement, Event si Merch specifice unui artist sau unui host, extind
-clasa Publicity unde se gasesc variabilele si metodele comune acestora.
+In this class, I added specific methods for a regular user and a reference to
+all existing albums sent to the SearchBar to enable searching through albums.
+
+## <span style="color:Magenta">Player</span>
+
+In Player, I implemented the specific commands for a playlist and albums,
+which behave similarly.
+
+## <span style="color:Magenta">Publicity</span>
+
+The Announcement, Event, and Merch classes, specific to an artist or a
+host, extend the Publicity class, where common variables and methods are
+found.
 
 ### <span style="color:Aquamarine">User </span> implements:
+
     > SearchBarCommands
     > PlayerCommands
     > PlaylistCommands
+
 ### <span style="color:Aquamarine">Library </span> implements:
+
     > GeneralStatistics
-    > se foloseste design pattern-ul Singleton pentru a avea o singura instanta
-    > a clasei Library
+    > Uses the Singleton design pattern to have a single instance
+    > of the Library class
+
 ### <span style="color:Aquamarine">Song, Podcast, AudioFilesCollection:
+
     > AudioFiles
+
 ### <span style="color:Aquamarine">Album, Playlist</span> extend:
+
     > AudioFilesCollection
+
 ### <span style="color:Aquamarine">ArtistPage, HomePage, HostPage,
+
 ### <span style="color:Aquamarine">LikedContentPage</span> extend:
+
     > Page
+
 ### <span style="color:Aquamarine">ArtistPage, HomePage, HostPage,
-### <span style="color:Aquamarine">LikedContentPage</span> implement:    
+
+### <span style="color:Aquamarine">LikedContentPage</span> implement:
+
     > PageAccept
+
 ### <span style="color:Aquamarine">PagePrinter</span> implements:
+
     > PageVisitor
-    > se foloseste design pattern-ul Visitor pentru a afisa continutul paginii
+    > Uses the Visitor design pattern to display page content
+
 ### <span style="color:Aquamarine">Announcement, Event, Merch</span> extend:
+
     > Publicity
 
 ## <span style="color:Darkorange">GeneralFeedback</span>
-A fost o continuare interesanta a primei parti, pot spune ca a mers mult mai
-bine decat prima totusi, pentru faptul ca era deja facuta baza, trebuia doar sa
-dezvoltam.
 
-
-
-
-
+It was an interesting continuation of the first part. I can say it went much
+better than the first one, mainly because the base was already done, and we
+just had to develop it further.
